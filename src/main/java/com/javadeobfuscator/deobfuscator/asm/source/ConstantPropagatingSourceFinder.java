@@ -16,10 +16,12 @@
 
 package com.javadeobfuscator.deobfuscator.asm.source;
 
-import org.objectweb.asm.tree.*;
-import org.objectweb.asm.tree.analysis.*;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.analysis.Frame;
+import org.objectweb.asm.tree.analysis.SourceValue;
 
 public class ConstantPropagatingSourceFinder extends SourceFinderConsumer {
     public ConstantPropagatingSourceFinder(SourceFinderConsumer parent) {
@@ -117,11 +119,11 @@ public class ConstantPropagatingSourceFinder extends SourceFinderConsumer {
                 return new SourceResult(values, exceptions);
             }
             case SWAP: {
-                if (getStackOffset(sourceFrame, want) == sourceFrame.getStackSize() - 1) {
+                if (getStackOffset(sourceFrame, want) == sourceFrame.getStackSize() - 1)
                     return SourceFinder.findSource(methodNode, frames, this, now, curFrame.getStack(curFrame.getStackSize() - 2));
-                } else if (getStackOffset(sourceFrame, want) == sourceFrame.getStackSize() - 2) {
+                else if (getStackOffset(sourceFrame, want) == sourceFrame.getStackSize() - 2)
                     return SourceFinder.findSource(methodNode, frames, this, now, curFrame.getStack(curFrame.getStackSize() - 1));
-                }
+
                 throw new RuntimeException(String.valueOf(getStackOffset(sourceFrame, want)));
             }
             case DUP: {
@@ -133,11 +135,9 @@ public class ConstantPropagatingSourceFinder extends SourceFinderConsumer {
     }
 
     private static int getStackOffset(Frame<SourceValue> frame, SourceValue want) {
-        for (int i = 0; i < frame.getStackSize(); i++) {
-            if (frame.getStack(i) == want) {
+        for (int i = 0; i < frame.getStackSize(); i++)
+            if (frame.getStack(i) == want)
                 return i;
-            }
-        }
 
         return -1;
     }

@@ -18,8 +18,8 @@ package com.javadeobfuscator.deobfuscator.transformers.general.peephole;
 
 import com.javadeobfuscator.deobfuscator.config.TransformerConfig;
 import com.javadeobfuscator.deobfuscator.transformers.Transformer;
-
-import java.util.*;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 public class PeepholeOptimizer extends Transformer<TransformerConfig> {
     private static final Set<Class<? extends Transformer>> PEEPHOLE_TRANSFORMERS = new LinkedHashSet<>();
@@ -34,9 +34,8 @@ public class PeepholeOptimizer extends Transformer<TransformerConfig> {
                     PEEPHOLE_TRANSFORMERS) {
                 // todo the set should have the config
                 TransformerConfig config = TransformerConfig.configFor(peepholeTransformerClass);
-                if (getDeobfuscator().runFromConfig(config)) {
+                if (getDeobfuscator().runFromConfig(config))
                     madeModifications = true;
-                }
             }
             actuallyMadeModifications = actuallyMadeModifications || madeModifications;
         } while (madeModifications);
@@ -53,5 +52,4 @@ public class PeepholeOptimizer extends Transformer<TransformerConfig> {
         PEEPHOLE_TRANSFORMERS.add(LdcSwapInvokeSwapPopRemover.class);
         PEEPHOLE_TRANSFORMERS.add(ConstantFolder.class);
     }
-
 }

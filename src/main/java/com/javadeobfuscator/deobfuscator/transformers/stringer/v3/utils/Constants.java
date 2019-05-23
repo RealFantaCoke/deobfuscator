@@ -17,17 +17,26 @@
 package com.javadeobfuscator.deobfuscator.transformers.stringer.v3.utils;
 
 import com.google.common.collect.ImmutableMap;
-import com.javadeobfuscator.deobfuscator.matcher.*;
+import com.javadeobfuscator.deobfuscator.matcher.ANewArrayStep;
+import com.javadeobfuscator.deobfuscator.matcher.CapturingStep;
+import com.javadeobfuscator.deobfuscator.matcher.InstructionMatcher;
+import com.javadeobfuscator.deobfuscator.matcher.InstructionPattern;
+import com.javadeobfuscator.deobfuscator.matcher.InvocationStep;
+import com.javadeobfuscator.deobfuscator.matcher.LoadIntStep;
+import com.javadeobfuscator.deobfuscator.matcher.MultiStep;
+import com.javadeobfuscator.deobfuscator.matcher.OpcodeStep;
+import com.javadeobfuscator.deobfuscator.matcher.OptionalStep;
+import com.javadeobfuscator.deobfuscator.matcher.RepeatingStep;
+import com.javadeobfuscator.deobfuscator.matcher.Step;
 import com.javadeobfuscator.deobfuscator.transformers.stringer.v3.HideAccessTransformer;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.BiFunction;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.tree.LdcInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.function.BiFunction;
 
 public class Constants implements Opcodes {
     public static final String HIDE_ACCESS_DECRYPT_FIELD_SIG = "(I)Ljava/lang/reflect/Field;";

@@ -9,19 +9,27 @@ import com.javadeobfuscator.deobfuscator.executor.defined.ReflectiveProvider;
 import com.javadeobfuscator.deobfuscator.executor.providers.ComparisonProvider;
 import com.javadeobfuscator.deobfuscator.executor.providers.DelegatingProvider;
 import com.javadeobfuscator.deobfuscator.executor.values.JavaValue;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintStream;
+import java.lang.reflect.InvocationTargetException;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+import org.apache.commons.io.IOUtils;
+import org.junit.Before;
+import org.junit.Test;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
-import org.apache.commons.io.IOUtils;
-import org.junit.Before;
-import org.junit.Test;
-import java.io.*;
-import java.lang.reflect.InvocationTargetException;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
 import static org.junit.Assert.assertTrue;
 
@@ -58,22 +66,22 @@ public class TestRunner {
     @Test
     public void test() throws IOException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException, ClassNotFoundException {
         File testcases = new File("./src/test/resources/testcases");
-        if (!testcases.exists()) {
+        if (!testcases.exists())
             throw new AssertionError("Testcases folder does not exist");
-        }
+
         File krakatau = new File("./src/test/resources/Krakatau");
         if (!krakatau.exists()) {
             System.out.println("Krakatau assembler does not exist");
             return;
         }
-        for (File file : testcases.listFiles()) {
+        for (File file : testcases.listFiles())
             if (file.getName().endsWith(".j")) {
                 System.out.println("Compiling " + file);
                 File compiled = new File(testcases, file.getName().replace(".j", ".class"));
-                if (compiled.exists() && !compiled.delete()) {
+                if (compiled.exists() && !compiled.delete())
                     throw new AssertionError("Could not delete existing compiled testcase");
-                }
-                String out = "";
+
+                String out;
                 try {
                     Process process = Runtime.getRuntime().exec(new String[]{
                             "py",
@@ -87,9 +95,8 @@ public class TestRunner {
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }
-                if (!compiled.exists()) {
+                if (!compiled.exists())
                     throw new AssertionError("Failed to compile " + file.getName() + " " + out);
-                }
 
                 try {
                     ClassNode classNode = new ClassNode();
@@ -107,14 +114,10 @@ public class TestRunner {
                         @Override
                         public boolean checkcast(JavaValue target, Type type, Context context) {
                             if (type.getDescriptor().equals("[B")) {
-                                if (!(target.value() instanceof byte[])) {
-                                    return false;
-                                }
-                            } else if (type.getDescriptor().equals("[I")) {
-                                if (!(target.value() instanceof int[])) {
-                                    return false;
-                                }
-                            }
+                                return target.value() instanceof byte[];
+                            } else if (type.getDescriptor().equals("[I"))
+                                return target.value() instanceof int[];
+
                             return true;
                         }
 
@@ -161,9 +164,8 @@ public class TestRunner {
                         if (ex.getCause() != null) {
                             ps1.print("Exception in thread \"main\" ");
                             ex.getCause().printStackTrace(ps1);
-                        } else {
+                        } else
                             throw ex;
-                        }
                     }
                     String actual = baos.toString("UTF-8");
                     String actualErr = baos1.toString("UTF-8");
@@ -178,9 +180,9 @@ public class TestRunner {
                     );
                     String s = IOUtils.toString(p1.getInputStream());
                     String s1 = IOUtils.toString(p1.getErrorStream());
-                    if (s.equals(actual) && s1.equals(actualErr)) {
+                    if (s.equals(actual) && s1.equals(actualErr))
                         System.out.println("Tests matched");
-                    } else {
+                    else {
                         System.out.println("Error: Test did not match");
                         System.out.println("++++++++++++++++");
                         System.out.println("Expected output");
@@ -201,7 +203,6 @@ public class TestRunner {
                     compiled.delete();
                 }
             }
-        }
     }
 
 
@@ -217,9 +218,8 @@ public class TestRunner {
             result.append("An error occured while reading from stdout").append("\n");
             result.append("Caused by: ").append(e.getClass()).append(" ").append(e.getMessage()).append("\n");
         } finally {
-            if (inputStreamBytes.length > 0) {
+            if (inputStreamBytes.length > 0)
                 result.append(new String(inputStreamBytes, StandardCharsets.UTF_8));
-            }
         }
         result.append("---- STDERR ----").append("\n");
         inputStream = process.getErrorStream();
@@ -230,9 +230,8 @@ public class TestRunner {
             result.append("An error occured while reading from stderr").append("\n");
             result.append("Caused by: ").append(e.getClass()).append(" ").append(e.getMessage()).append("\n");
         } finally {
-            if (inputStreamBytes.length > 0) {
+            if (inputStreamBytes.length > 0)
                 result.append(new String(inputStreamBytes, StandardCharsets.UTF_8));
-            }
         }
 
         result.append("---- EXIT VALUE ----").append("\n");
@@ -244,9 +243,8 @@ public class TestRunner {
             result.append("An error occured while obtaining the exit value").append("\n");
             result.append("Caused by: ").append(e.getClass()).append(" ").append(e.getMessage()).append("\n");
         } finally {
-            if (exitValue != -0xCAFEBABE) {
+            if (exitValue != -0xCAFEBABE)
                 result.append("Process finished with exit code ").append(exitValue).append("\n");
-            }
         }
 
         return result.toString();

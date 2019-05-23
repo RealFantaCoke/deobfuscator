@@ -16,28 +16,26 @@
 
 package com.javadeobfuscator.deobfuscator.executor.defined;
 
+import com.javadeobfuscator.deobfuscator.executor.Context;
+import com.javadeobfuscator.deobfuscator.executor.providers.FieldProvider;
+import com.javadeobfuscator.deobfuscator.executor.values.JavaValue;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-
-import com.javadeobfuscator.deobfuscator.executor.Context;
-import com.javadeobfuscator.deobfuscator.executor.providers.FieldProvider;
-import com.javadeobfuscator.deobfuscator.executor.values.JavaValue;
 
 public class MappedFieldProvider extends FieldProvider {
     private final Map<String, Object> staticFields = Collections.synchronizedMap(new HashMap<>());
     private final Map<Object, Map<String, Object>> instanceFields = new ConcurrentHashMap<>();
 
     public Object getField(String className, String fieldName, String fieldDesc, JavaValue targetObject, Context context) {
-        if (targetObject == null) {
+        if (targetObject == null)
             return staticFields.get(className + fieldName + fieldDesc);
-        } else {
+        else {
             synchronized (instanceFields) {
                 Object field = instanceFields.get(targetObject.value());
-                if (field != null) {
+                if (field != null)
                     return ((Map<String, Object>) field).get(className + fieldName + fieldDesc);
-                }
             }
 
             return null;
@@ -45,14 +43,14 @@ public class MappedFieldProvider extends FieldProvider {
     }
 
     public void setField(String className, String fieldName, String fieldDesc, JavaValue targetObject, Object value, Context context) {
-        if (targetObject == null) {
+        if (targetObject == null)
             staticFields.put(className + fieldName + fieldDesc, value);
-        } else {
+        else {
             synchronized (instanceFields) {
                 Object field = instanceFields.get(targetObject.value());
-                if (field == null) {
+                if (field == null)
                     field = new HashMap<>();
-                }
+
                 ((Map<String, Object>) field).put(className + fieldName + fieldDesc, value);
                 instanceFields.put(targetObject.value(), (Map<String, Object>) field);
             }

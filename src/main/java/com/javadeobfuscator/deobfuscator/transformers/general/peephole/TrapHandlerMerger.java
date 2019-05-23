@@ -17,20 +17,21 @@
 package com.javadeobfuscator.deobfuscator.transformers.general.peephole;
 
 import com.javadeobfuscator.deobfuscator.config.TransformerConfig;
+import com.javadeobfuscator.deobfuscator.transformers.Transformer;
+import com.javadeobfuscator.deobfuscator.utils.Utils;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.JumpInsnNode;
 import org.objectweb.asm.tree.LabelNode;
 import org.objectweb.asm.tree.TryCatchBlockNode;
-import com.javadeobfuscator.deobfuscator.transformers.Transformer;
-import com.javadeobfuscator.deobfuscator.utils.Utils;
-
-import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import static org.objectweb.asm.Opcodes.*;
 
 public class TrapHandlerMerger extends Transformer<TransformerConfig> {
-
     @Override
     public boolean transform() throws Throwable {
         AtomicInteger redudantTraps = new AtomicInteger();
@@ -41,9 +42,9 @@ public class TrapHandlerMerger extends Transformer<TransformerConfig> {
                     Set<LabelNode> handled = new HashSet<>();
                     outer:
                     for (TryCatchBlockNode tryCatchBlockNode : methodNode.tryCatchBlocks) {
-                        if (!handled.add(tryCatchBlockNode.handler)) {
+                        if (!handled.add(tryCatchBlockNode.handler))
                             continue;
-                        }
+
                         List<String> insns = new ArrayList<>(); // yes I know it's string because asm doesn't do equals
                         loop:
                         for (AbstractInsnNode now = tryCatchBlockNode.handler; ; ) {
@@ -64,10 +65,9 @@ public class TrapHandlerMerger extends Transformer<TransformerConfig> {
                                         // done!
                                         break loop;
                                 }
-                                if (Utils.isTerminating(now) || now instanceof JumpInsnNode) {
+                                if (Utils.isTerminating(now) || now instanceof JumpInsnNode)
                                     // not gonna worry about branching handlers for now
                                     continue outer;
-                                }
                             }
                             now = now.getNext();
                         }
@@ -76,12 +76,11 @@ public class TrapHandlerMerger extends Transformer<TransformerConfig> {
                     }
 
                     merge.forEach((insns, handlers) -> {
-                        if (handlers.size() > 1) {
+                        if (handlers.size() > 1)
                             for (TryCatchBlockNode t : handlers) {
                                 t.handler = handlers.get(0).handler;
                                 redudantTraps.incrementAndGet();
                             }
-                        }
                     });
                 }
             });

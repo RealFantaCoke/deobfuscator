@@ -18,16 +18,17 @@ package com.javadeobfuscator.deobfuscator.transformers.normalizer;
 
 import com.javadeobfuscator.deobfuscator.config.TransformerConfig;
 import com.javadeobfuscator.deobfuscator.utils.ClassTree;
-import org.objectweb.asm.commons.ClassRemapper;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 
-import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
-
 @TransformerConfig.ConfigOptions(configClass = FieldNormalizer.Config.class)
 public class FieldNormalizer extends AbstractNormalizer<FieldNormalizer.Config> {
-
     @Override
     public void remap(CustomRemapper remapper) {
         AtomicInteger id = new AtomicInteger(0);
@@ -53,26 +54,23 @@ public class FieldNormalizer extends AbstractNormalizer<FieldNormalizer.Config> 
                 for (String possibleClass : allClasses) {
                     ClassNode otherNode = this.getDeobfuscator().assureLoaded(possibleClass);
                     boolean found = false;
-                    for (FieldNode otherField : otherNode.fields) {
-                        if (otherField.name.equals(fieldNode.name) && otherField.desc.equals(fieldNode.desc)) {
+                    for (FieldNode otherField : otherNode.fields)
+                        if (otherField.name.equals(fieldNode.name) && otherField.desc.equals(fieldNode.desc))
                             found = true;
-                        }
-                    }
-                    if (!found) {
+
+                    if (!found)
                         references.add(possibleClass);
-                    }
                 }
-                if (!remapper.fieldMappingExists(classNode.name, fieldNode.name, fieldNode.desc)) {
+                if (!remapper.fieldMappingExists(classNode.name, fieldNode.name, fieldNode.desc))
                     while (true) {
                         String newName = "Field" + id.getAndIncrement();
                         if (remapper.mapFieldName(classNode.name, fieldNode.name, fieldNode.desc, newName, false)) {
-                            for (String s : references) {
+                            for (String s : references)
                                 remapper.mapFieldName(s, fieldNode.name, fieldNode.desc, newName, true);
-                            }
+
                             break;
                         }
                     }
-                }
             }
         });
     }

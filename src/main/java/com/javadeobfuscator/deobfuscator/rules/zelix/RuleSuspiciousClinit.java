@@ -16,15 +16,14 @@
 
 package com.javadeobfuscator.deobfuscator.rules.zelix;
 
-import com.javadeobfuscator.deobfuscator.*;
-import com.javadeobfuscator.deobfuscator.rules.*;
-import com.javadeobfuscator.deobfuscator.transformers.*;
-import com.javadeobfuscator.deobfuscator.transformers.zelix.*;
-import com.javadeobfuscator.deobfuscator.utils.*;
-import org.objectweb.asm.*;
-import org.objectweb.asm.tree.*;
-
-import java.util.*;
+import com.javadeobfuscator.deobfuscator.Deobfuscator;
+import com.javadeobfuscator.deobfuscator.rules.Rule;
+import com.javadeobfuscator.deobfuscator.transformers.Transformer;
+import com.javadeobfuscator.deobfuscator.utils.TransformerHelper;
+import java.util.Collection;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.MethodNode;
 
 public class RuleSuspiciousClinit implements Rule, Opcodes {
     @Override
@@ -36,9 +35,8 @@ public class RuleSuspiciousClinit implements Rule, Opcodes {
     public String test(Deobfuscator deobfuscator) {
         for (ClassNode classNode : deobfuscator.getClasses().values()) {
             MethodNode clinit = TransformerHelper.findClinit(classNode);
-            if (clinit == null) {
+            if (clinit == null)
                 continue;
-            }
 
             boolean isZKM = true;
 
@@ -48,9 +46,8 @@ public class RuleSuspiciousClinit implements Rule, Opcodes {
             isZKM = isZKM && TransformerHelper.countOccurencesOf(clinit, IXOR) > 0;
             isZKM = isZKM && TransformerHelper.countOccurencesOf(clinit, IREM) > 0;
 
-            if (isZKM) {
+            if (isZKM)
                 return "Found suspicious <clinit> in " + classNode.name;
-            }
         }
 
         return null;

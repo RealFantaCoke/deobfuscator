@@ -16,8 +16,6 @@
 
 package com.javadeobfuscator.deobfuscator.executor.values;
 
-import org.objectweb.asm.Type;
-
 import com.google.common.primitives.Primitives;
 import com.javadeobfuscator.deobfuscator.executor.MethodExecutor;
 import com.javadeobfuscator.deobfuscator.executor.defined.types.JavaClass;
@@ -28,11 +26,11 @@ import com.javadeobfuscator.deobfuscator.executor.defined.types.JavaMethod;
 import com.javadeobfuscator.deobfuscator.executor.defined.types.JavaMethodHandle;
 import com.javadeobfuscator.deobfuscator.executor.defined.types.JavaThread;
 import com.javadeobfuscator.deobfuscator.executor.exceptions.ExecutionException;
+import org.objectweb.asm.Type;
 
 public abstract class JavaValue {
-    
-    public boolean booleanValue() { 
-        throw new ExecutionException(new UnsupportedOperationException()); 
+    public boolean booleanValue() {
+        throw new ExecutionException(new UnsupportedOperationException());
     }
 
     public int intValue() {
@@ -56,18 +54,15 @@ public abstract class JavaValue {
     }
 
     public <T> T as(Class<T> clazz) {
-        if (Primitives.unwrap(clazz) != clazz) {
+        if (Primitives.unwrap(clazz) != clazz)
             throw new ExecutionException("Cannot call as(Class<T> clazz) with a primitive class");
-        }
-        if (value() instanceof Character && clazz == char.class) {
+        if (value() instanceof Character && clazz == char.class)
             return (T) value();
-        }
-        if (value() instanceof Integer && clazz == boolean.class) {
+        if (value() instanceof Integer && clazz == boolean.class)
             return (T) Boolean.valueOf(intValue() != 0 ? true : false);
-        }
-        if (value() instanceof Byte && clazz == char.class) {
+        if (value() instanceof Byte && clazz == char.class)
             return (T) Character.valueOf((char) ((JavaByte) this).byteValue());
-        }
+
         return clazz.cast(value());
     }
 
@@ -82,28 +77,28 @@ public abstract class JavaValue {
     }
 
     public static JavaValue valueOf(Object cst) {
-    	if(cst == null)
-    		return new JavaObject(cst, "java/lang/Object");
-    	else if(cst.getClass().isArray())
-    		return new JavaObject(cst, "java/lang/Object");
-    	else if(cst instanceof JavaThread)
-    		return new JavaObject(cst, "java/lang/Thread");
-    	else if(cst instanceof JavaMethodHandle)
-    		return new JavaObject(cst, "java/lang/invoke/MethodHandle");
-    	else if(cst instanceof JavaMethod)
-    		return new JavaObject(cst, "java/lang/reflect/Method");
-    	else if(cst instanceof JavaField)
-    		return new JavaObject(cst, "java/lang/reflect/Field");
-    	else if(cst instanceof JavaConstructor)
-    		return new JavaObject(cst, "java/lang/reflect/Constructor");
-    	else if(cst instanceof JavaConstantPool)
-    		return new JavaObject(cst, "sun/reflect/ConstantPool");
-    	else if(cst instanceof JavaClass)
-    		return new JavaObject(cst, "java/lang/Class");
-    	else if(cst instanceof JavaObject)
-    		return new JavaObject(cst, ((JavaObject)cst).type());
-    	else
-    		return new JavaObject(cst, Type.getType(cst.getClass()).getInternalName());
+        if (cst == null)
+            return new JavaObject(cst, "java/lang/Object");
+        else if (cst.getClass().isArray())
+            return new JavaObject(cst, "java/lang/Object");
+        else if (cst instanceof JavaThread)
+            return new JavaObject(cst, "java/lang/Thread");
+        else if (cst instanceof JavaMethodHandle)
+            return new JavaObject(cst, "java/lang/invoke/MethodHandle");
+        else if (cst instanceof JavaMethod)
+            return new JavaObject(cst, "java/lang/reflect/Method");
+        else if (cst instanceof JavaField)
+            return new JavaObject(cst, "java/lang/reflect/Field");
+        else if (cst instanceof JavaConstructor)
+            return new JavaObject(cst, "java/lang/reflect/Constructor");
+        else if (cst instanceof JavaConstantPool)
+            return new JavaObject(cst, "sun/reflect/ConstantPool");
+        else if (cst instanceof JavaClass)
+            return new JavaObject(cst, "java/lang/Class");
+        else if (cst instanceof JavaObject)
+            return new JavaObject(cst, ((JavaObject) cst).type());
+        else
+            return new JavaObject(cst, Type.getType(cst.getClass()).getInternalName());
     }
 
     public static JavaValue forPrimitive(Class<?> prim) {
@@ -116,16 +111,16 @@ public abstract class JavaValue {
                 result = new JavaCharacter('\u0000');
                 break;
             case "double":
-                result = new JavaDouble(0.0d);
+                result = new JavaDouble(0.0D);
                 break;
             case "float":
-                result = new JavaFloat(0.0f);
+                result = new JavaFloat(0.0F);
                 break;
             case "int":
                 result = new JavaInteger(0);
                 break;
             case "long":
-                result = new JavaLong(0l);
+                result = new JavaLong(0L);
                 break;
             case "short":
                 result = new JavaShort((short) 0);

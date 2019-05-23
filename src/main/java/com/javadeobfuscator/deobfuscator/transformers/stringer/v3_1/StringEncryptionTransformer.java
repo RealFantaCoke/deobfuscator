@@ -26,12 +26,16 @@ import com.javadeobfuscator.deobfuscator.utils.Utils;
 import com.javadeobfuscator.javavm.MethodExecution;
 import com.javadeobfuscator.javavm.StackTraceHolder;
 import com.javadeobfuscator.javavm.VirtualMachine;
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.tree.*;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.InsnNode;
+import org.objectweb.asm.tree.LabelNode;
+import org.objectweb.asm.tree.LdcInsnNode;
+import org.objectweb.asm.tree.MethodNode;
 
 public class StringEncryptionTransformer extends Transformer<TransformerConfig> implements Opcodes {
     @Override
@@ -39,22 +43,20 @@ public class StringEncryptionTransformer extends Transformer<TransformerConfig> 
         VirtualMachine vm = TransformerHelper.newVirtualMachine(this);
 
         vm.beforeCallHooks.add(info -> {
-            if (!info.is("java/lang/Class", "forName0", "(Ljava/lang/String;ZLjava/lang/ClassLoader;Ljava/lang/Class;)Ljava/lang/Class;")) {
+            if (!info.is("java/lang/Class", "forName0", "(Ljava/lang/String;ZLjava/lang/ClassLoader;Ljava/lang/Class;)Ljava/lang/Class;"))
                 return;
-            }
             List<StackTraceHolder> stacktrace = vm.getStacktrace();
-            if (stacktrace.size() < 3) {
+            if (stacktrace.size() < 3)
                 return;
-            }
-            if (!classes.containsKey(stacktrace.get(2).getClassNode().name)) {
+            if (!classes.containsKey(stacktrace.get(2).getClassNode().name))
                 return;
-            }
+
             info.getParams().set(1, vm.newBoolean(false));
         });
 
         int decrypted = 0;
 
-        for (ClassNode classNode : classes.values()) {
+        for (ClassNode classNode : classes.values())
             for (MethodNode methodNode : new ArrayList<>(classNode.methods)) {
                 InstructionModifier modifier = new InstructionModifier();
 
@@ -62,14 +64,13 @@ public class StringEncryptionTransformer extends Transformer<TransformerConfig> 
 
                 for (AbstractInsnNode insn : TransformerHelper.instructionIterator(methodNode)) {
                     InstructionMatcher matcher = Constants.DECRYPT_PATTERN.matcher(insn);
-                    if (!matcher.find()) {
+                    if (!matcher.find())
                         continue;
-                    }
 
                     MethodNode decryptorMethod = new MethodNode(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, methodNode.name, "()Ljava/lang/String;", null, null);
-                    for (AbstractInsnNode matched : matcher.getCapturedInstructions("all")) {
+                    for (AbstractInsnNode matched : matcher.getCapturedInstructions("all"))
                         decryptorMethod.instructions.add(matched.clone(cloneMap));
-                    }
+
                     decryptorMethod.instructions.add(new InsnNode(ARETURN));
 
                     classNode.methods.add(decryptorMethod);
@@ -87,7 +88,6 @@ public class StringEncryptionTransformer extends Transformer<TransformerConfig> 
 
                 modifier.apply(methodNode);
             }
-        }
 
         vm.shutdown();
 

@@ -1,7 +1,6 @@
 package com.javadeobfuscator.deobfuscator.analyzer.frame;
 
 public class ArrayStoreFrame extends Frame {
-
     private Frame object;
     private Frame index;
     private Frame array;
@@ -19,16 +18,15 @@ public class ArrayStoreFrame extends Frame {
         this.parents.add(this.array);
     }
 
-    public Frame getObject(){
-         return this.object;
+    public Frame getObject() {
+        return this.object;
     }
 
-    public Frame getIndex()  {
+    public Frame getIndex() {
         return this.index;
     }
 
     public Frame getArray() {
         return this.array;
     }
-
 }

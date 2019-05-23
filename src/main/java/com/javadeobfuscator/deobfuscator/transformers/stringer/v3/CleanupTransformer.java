@@ -22,11 +22,10 @@ import com.javadeobfuscator.deobfuscator.transformers.Transformer;
 import com.javadeobfuscator.deobfuscator.transformers.stringer.v3.utils.HideAccessClassFinder;
 import com.javadeobfuscator.deobfuscator.transformers.stringer.v3.utils.InvokedynamicMethodFinder;
 import com.javadeobfuscator.deobfuscator.transformers.stringer.v3.utils.StringEncryptionClassFinder;
-import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.MethodNode;
-
 import java.util.Map;
 import java.util.Set;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.MethodNode;
 
 @TransformerConfig.ConfigOptions(configClass = CleanupTransformer.Config.class)
 public class CleanupTransformer extends Transformer<CleanupTransformer.Config> {
@@ -42,8 +41,6 @@ public class CleanupTransformer extends Transformer<CleanupTransformer.Config> {
 
     private void cleanupResourceEncryption() {
         if (!getConfig().cleanupResourceEncryption) return;
-
-
     }
 
     private void cleanupHideAccessClasses() {

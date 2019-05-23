@@ -16,17 +16,22 @@
 
 package com.javadeobfuscator.deobfuscator.transformers.general.peephole;
 
-import com.javadeobfuscator.deobfuscator.config.*;
-import com.javadeobfuscator.deobfuscator.transformers.*;
-import com.javadeobfuscator.deobfuscator.utils.*;
-import org.objectweb.asm.tree.*;
-import org.objectweb.asm.tree.analysis.*;
+import com.javadeobfuscator.deobfuscator.config.TransformerConfig;
+import com.javadeobfuscator.deobfuscator.transformers.Transformer;
+import com.javadeobfuscator.deobfuscator.utils.InstructionModifier;
+import com.javadeobfuscator.deobfuscator.utils.Utils;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.analysis.Analyzer;
+import org.objectweb.asm.tree.analysis.BasicInterpreter;
+import org.objectweb.asm.tree.analysis.BasicValue;
+import org.objectweb.asm.tree.analysis.Frame;
 
 public class DeadCodeRemover extends Transformer<TransformerConfig> {
     @Override
     public boolean transform() throws Throwable {
         int deadInstructions = 0;
-        for (ClassNode classNode : classes.values()) {
+        for (ClassNode classNode : classes.values())
             for (MethodNode methodNode : classNode.methods) {
                 if (methodNode.instructions.getFirst() == null) continue;
 
@@ -44,11 +49,10 @@ public class DeadCodeRemover extends Transformer<TransformerConfig> {
                 modifier.apply(methodNode);
 
                 // empty try catch nodes are illegal
-                if (methodNode.tryCatchBlocks != null) {
+                if (methodNode.tryCatchBlocks != null)
                     methodNode.tryCatchBlocks.removeIf(tryCatchBlockNode -> Utils.getNext(tryCatchBlockNode.start) == Utils.getNext(tryCatchBlockNode.end));
-                }
             }
-        }
+
         logger.info("Removed {} dead instructions", deadInstructions);
         return deadInstructions > 0;
     }

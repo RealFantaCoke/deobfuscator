@@ -16,16 +16,17 @@
 
 package com.javadeobfuscator.deobfuscator.rules.stringer;
 
-import com.javadeobfuscator.deobfuscator.*;
-import com.javadeobfuscator.deobfuscator.rules.*;
-import com.javadeobfuscator.deobfuscator.transformers.*;
-import com.javadeobfuscator.deobfuscator.transformers.stringer.invokedynamic.*;
-import com.javadeobfuscator.deobfuscator.utils.*;
-import org.objectweb.asm.*;
-import org.objectweb.asm.tree.*;
-
-import java.lang.reflect.*;
-import java.util.*;
+import com.javadeobfuscator.deobfuscator.Deobfuscator;
+import com.javadeobfuscator.deobfuscator.rules.Rule;
+import com.javadeobfuscator.deobfuscator.transformers.Transformer;
+import com.javadeobfuscator.deobfuscator.transformers.stringer.invokedynamic.Invokedynamic1Transformer;
+import com.javadeobfuscator.deobfuscator.utils.TransformerHelper;
+import java.lang.reflect.Modifier;
+import java.util.Collection;
+import java.util.Collections;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.MethodNode;
 
 public class RuleInvokedynamic1 implements Rule, Opcodes {
     @Override
@@ -39,12 +40,10 @@ public class RuleInvokedynamic1 implements Rule, Opcodes {
     public String test(Deobfuscator deobfuscator) {
         for (ClassNode classNode : deobfuscator.getClasses().values()) {
             MethodNode bsm = TransformerHelper.findMethodNode(classNode, null, Invokedynamic1Transformer.BSM_DESC);
-            if (bsm == null) {
+            if (bsm == null)
                 continue;
-            }
-            if (!Modifier.isStatic(bsm.access)) {
+            if (!Modifier.isStatic(bsm.access))
                 continue;
-            }
 
             boolean isBSM = true;
 
@@ -54,9 +53,8 @@ public class RuleInvokedynamic1 implements Rule, Opcodes {
             isBSM = isBSM && TransformerHelper.countOccurencesOf(bsm, IXOR) > 0;
             isBSM = isBSM && TransformerHelper.countOccurencesOf(bsm, IREM) > 0;
 
-            if (isBSM) {
+            if (isBSM)
                 return "Found potential bootstrap method " + classNode.name + " " + bsm.name + bsm.desc;
-            }
         }
 
         return null;

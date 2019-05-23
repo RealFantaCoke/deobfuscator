@@ -18,14 +18,13 @@ package com.javadeobfuscator.deobfuscator.transformers.stringer.v3.utils;
 
 import com.javadeobfuscator.deobfuscator.transformers.ClassFinder;
 import com.javadeobfuscator.deobfuscator.utils.TransformerHelper;
-import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.FieldNode;
-import org.objectweb.asm.tree.MethodNode;
-
 import java.lang.reflect.Modifier;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.FieldNode;
+import org.objectweb.asm.tree.MethodNode;
 
 import static com.javadeobfuscator.deobfuscator.transformers.stringer.v3.utils.Constants.HIDE_ACCESS_DECRYPT_FIELD_SIG;
 import static com.javadeobfuscator.deobfuscator.transformers.stringer.v3.utils.Constants.HIDE_ACCESS_DECRYPT_METHOD_SIG;
@@ -35,33 +34,27 @@ public class HideAccessClassFinder implements ClassFinder {
     public Set<ClassNode> find(Collection<ClassNode> classes) {
         Set<ClassNode> found = new HashSet<>();
         for (ClassNode classNode : classes) {
-            if (!Modifier.isFinal(classNode.access)) {
+            if (!Modifier.isFinal(classNode.access))
                 continue;
-            }
 
             FieldNode array = TransformerHelper.findFieldNode(classNode, null, "[Ljava/lang/Object;");
-            if (array == null) {
+            if (array == null)
                 continue;
-            }
-            if (!Modifier.isFinal(array.access) || !Modifier.isStatic(array.access)) {
+            if (!Modifier.isFinal(array.access) || !Modifier.isStatic(array.access))
                 continue;
-            }
 
             MethodNode getFieldMethod = TransformerHelper.findMethodNode(classNode, null, HIDE_ACCESS_DECRYPT_FIELD_SIG);
-            if (getFieldMethod == null) {
+            if (getFieldMethod == null)
                 continue;
-            }
-            if (!Modifier.isStatic(getFieldMethod.access)) {
+            if (!Modifier.isStatic(getFieldMethod.access))
                 continue;
-            }
+
 
             MethodNode getMethodMethod = TransformerHelper.findMethodNode(classNode, null, HIDE_ACCESS_DECRYPT_METHOD_SIG);
-            if (getMethodMethod == null) {
+            if (getMethodMethod == null)
                 continue;
-            }
-            if (!Modifier.isStatic(getMethodMethod.access)) {
+            if (!Modifier.isStatic(getMethodMethod.access))
                 continue;
-            }
 
             found.add(classNode);
         }

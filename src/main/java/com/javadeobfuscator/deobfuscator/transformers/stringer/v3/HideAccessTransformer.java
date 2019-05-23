@@ -31,16 +31,38 @@ import com.javadeobfuscator.javavm.exceptions.AbortException;
 import com.javadeobfuscator.javavm.mirrors.JavaClass;
 import com.javadeobfuscator.javavm.nativeimpls.java_lang_Class;
 import com.javadeobfuscator.javavm.values.JavaWrapper;
+import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.tree.*;
-import org.objectweb.asm.tree.analysis.*;
+import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.FieldInsnNode;
+import org.objectweb.asm.tree.FieldNode;
+import org.objectweb.asm.tree.InsnList;
+import org.objectweb.asm.tree.InsnNode;
+import org.objectweb.asm.tree.MethodInsnNode;
+import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.TypeInsnNode;
+import org.objectweb.asm.tree.analysis.Analyzer;
+import org.objectweb.asm.tree.analysis.AnalyzerException;
+import org.objectweb.asm.tree.analysis.BasicInterpreter;
+import org.objectweb.asm.tree.analysis.BasicValue;
+import org.objectweb.asm.tree.analysis.Frame;
 
-import java.lang.reflect.Modifier;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
-
-import static com.javadeobfuscator.deobfuscator.transformers.stringer.v3.utils.Constants.*;
+import static com.javadeobfuscator.deobfuscator.transformers.stringer.v3.utils.Constants.HIDE_ACCESS_DECRYPT_FIELD_SIG;
+import static com.javadeobfuscator.deobfuscator.transformers.stringer.v3.utils.Constants.HIDE_ACCESS_DECRYPT_METHOD_SIG;
+import static com.javadeobfuscator.deobfuscator.transformers.stringer.v3.utils.Constants.HIDE_ACCESS_GETFIELD;
+import static com.javadeobfuscator.deobfuscator.transformers.stringer.v3.utils.Constants.HIDE_ACCESS_GETSTATIC;
+import static com.javadeobfuscator.deobfuscator.transformers.stringer.v3.utils.Constants.HIDE_ACCESS_INVOKESTATIC_INVOKESPECIAL;
+import static com.javadeobfuscator.deobfuscator.transformers.stringer.v3.utils.Constants.HIDE_ACCESS_INVOKEVIRTUAL;
+import static com.javadeobfuscator.deobfuscator.transformers.stringer.v3.utils.Constants.HIDE_ACCESS_PUTFIELD;
+import static com.javadeobfuscator.deobfuscator.transformers.stringer.v3.utils.Constants.HIDE_ACCESS_PUTSTATIC;
 import static com.javadeobfuscator.deobfuscator.utils.TransformerHelper.load;
 import static com.javadeobfuscator.deobfuscator.utils.TransformerHelper.size;
 import static com.javadeobfuscator.deobfuscator.utils.TransformerHelper.store;
@@ -67,7 +89,7 @@ public class HideAccessTransformer extends Transformer<TransformerConfig> implem
 
         int decrypted = 0;
 
-        for (ClassNode classNode : classes.values()) {
+        for (ClassNode classNode : classes.values())
             for (MethodNode methodNode : new ArrayList<>(classNode.methods)) {
                 InstructionModifier modifier = new InstructionModifier();
 
@@ -81,14 +103,12 @@ public class HideAccessTransformer extends Transformer<TransformerConfig> implem
                             HIDE_ACCESS_INVOKESTATIC_INVOKESPECIAL
                     );
 
-                    if (matcher == null) {
+                    if (matcher == null)
                         continue;
-                    }
 
                     InsnList instructions = Constants.HIDE_ACCESS_HANDLERS.get(matcher.getPattern()).apply(this, matcher);
-                    if (instructions == null) {
+                    if (instructions == null)
                         continue;
-                    }
 
                     MethodNode decryptorMethod = new MethodNode(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, methodNode.name, "()V", null, null);
                     decryptorMethod.instructions.add(instructions);
@@ -97,9 +117,9 @@ public class HideAccessTransformer extends Transformer<TransformerConfig> implem
                     classNode.methods.add(decryptorMethod);
                     vm.execute(classNode, decryptorMethod, null, Collections.<JavaWrapper>emptyList());
                     classNode.methods.remove(decryptorMethod);
-                    if (captured.get() == null) {
+                    if (captured.get() == null)
                         throw new WrongTransformerException("Expected non-null java/lang/reflect/*");
-                    }
+
                     logger.debug("Decrypted {} in {} {}{}", captured.get().asObject().javaToString(), classNode.name, methodNode.name, methodNode.desc);
 
                     modifier.removeAll(matcher.getCapturedInstructions("all"));
@@ -110,32 +130,28 @@ public class HideAccessTransformer extends Transformer<TransformerConfig> implem
                         FieldNode reflField = reflClass.fields.get(captured.get().asObject().getField("slot", "I").asInt());
 
                         int opcode;
-                        if (Modifier.isStatic(reflField.access)) {
+                        if (Modifier.isStatic(reflField.access))
                             opcode = matcher.getPattern() == HIDE_ACCESS_GETSTATIC ? GETSTATIC : PUTSTATIC;
-                        } else {
+                        else
                             opcode = matcher.getPattern() == HIDE_ACCESS_GETFIELD ? GETFIELD : PUTFIELD;
-                        }
 
                         InsnList replace = new InsnList();
-                        if (opcode == PUTSTATIC || opcode == PUTFIELD) {
+                        if (opcode == PUTSTATIC || opcode == PUTFIELD)
                             replace.add(TransformerHelper.unbox(Type.getType(reflField.desc)));
-                        }
+
                         replace.add(new FieldInsnNode(opcode, reflClass.name, reflField.name, reflField.desc));
-                        if (opcode == GETSTATIC || opcode == GETFIELD) {
+                        if (opcode == GETSTATIC || opcode == GETFIELD)
                             replace.add(TransformerHelper.box(Type.getType(reflField.desc)));
-                        }
 
                         modifier.replace(matcher.getEnd(), replace);
-                    } else {
+                    } else
                         modifier.replace(matcher.getEnd(), convertMethodInvocation(methodNode, matcher.getCapturedInstruction("call"), captured.get()));
-                    }
 
                     decrypted++;
                 }
 
                 modifier.apply(methodNode);
             }
-        }
 
         vm.shutdown();
 
@@ -146,54 +162,46 @@ public class HideAccessTransformer extends Transformer<TransformerConfig> implem
     private void prepareVM() {
         // prevent initializing classes
         vm.beforeCallHooks.add(info -> {
-            if (!info.is("sun/misc/Unsafe", "ensureClassInitialized", "(Ljava/lang/Class;)V")) {
+            if (!info.is("sun/misc/Unsafe", "ensureClassInitialized", "(Ljava/lang/Class;)V"))
                 return;
-            }
+
             info.setReturnValue(vm.getNull());
         });
         vm.beforeCallHooks.add(info -> {
-            if (!info.is("java/lang/Class", "forName0", "(Ljava/lang/String;ZLjava/lang/ClassLoader;Ljava/lang/Class;)Ljava/lang/Class;")) {
+            if (!info.is("java/lang/Class", "forName0", "(Ljava/lang/String;ZLjava/lang/ClassLoader;Ljava/lang/Class;)Ljava/lang/Class;"))
                 return;
-            }
             List<StackTraceHolder> stacktrace = vm.getStacktrace();
-            if (stacktrace.size() < 3) {
+            if (stacktrace.size() < 3)
                 return;
-            }
-            if (!classes.containsKey(stacktrace.get(2).getClassNode().name)) {
+            if (!classes.containsKey(stacktrace.get(2).getClassNode().name))
                 return;
-            }
             info.getParams().set(1, vm.newBoolean(false));
         });
 
         // For retrieving java/lang/reflect/Method and java/lang/reflect/Field instances
         vm.afterCallHooks.add(info -> {
             boolean isInterested = false;
-            for (String decryptionClass : decryptionClasses) {
+            for (String decryptionClass : decryptionClasses)
                 if (info.getClassNode().name.equals(decryptionClass) &&
                         (info.getMethodNode().desc.equals(HIDE_ACCESS_DECRYPT_FIELD_SIG) ||
-                                info.getMethodNode().desc.equals(HIDE_ACCESS_DECRYPT_METHOD_SIG))) {
+                                info.getMethodNode().desc.equals(HIDE_ACCESS_DECRYPT_METHOD_SIG)))
                     isInterested = true;
-                }
-            }
 
-            if (!isInterested) {
+            if (!isInterested)
                 return;
-            }
 
             captured.set(info.getReturnValue());
             throw AbortException.INSTANCE;
         });
         vm.beforeCallHooks.add(info -> {
-            if (!info.is("java/lang/reflect/Constructor", "newInstance", "([Ljava/lang/Object;)Ljava/lang/Object;")) {
+            if (!info.is("java/lang/reflect/Constructor", "newInstance", "([Ljava/lang/Object;)Ljava/lang/Object;"))
                 return;
-            }
             List<StackTraceHolder> stacktrace = vm.getStacktrace();
-            if (stacktrace.size() < 2) {
+            if (stacktrace.size() < 2)
                 return;
-            }
-            if (!classes.containsKey(stacktrace.get(1).getClassNode().name)) {
+            if (!classes.containsKey(stacktrace.get(1).getClassNode().name))
                 return;
-            }
+
             captured.set(info.getInstance());
             throw AbortException.INSTANCE;
         });
@@ -205,15 +213,14 @@ public class HideAccessTransformer extends Transformer<TransformerConfig> implem
         MethodNode reflMethod = reflClass.methods.get(methodInstance.asObject().getField("slot", "I").asInt());
 
         int opcode;
-        if (reflMethod.name.equals("<init>")) {
+        if (reflMethod.name.equals("<init>"))
             opcode = INVOKESPECIAL;
-        } else if (Modifier.isStatic(reflMethod.access)) {
+        else if (Modifier.isStatic(reflMethod.access))
             opcode = INVOKESTATIC;
-        } else if (Modifier.isInterface(reflClass.access)) {
+        else if (Modifier.isInterface(reflClass.access))
             opcode = INVOKEINTERFACE;
-        } else {
+        else
             opcode = INVOKEVIRTUAL;
-        }
 
         InsnList replace = new InsnList();
         if (opcode == INVOKESPECIAL) {

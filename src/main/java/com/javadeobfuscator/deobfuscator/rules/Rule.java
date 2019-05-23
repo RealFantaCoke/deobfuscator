@@ -16,11 +16,10 @@
 
 package com.javadeobfuscator.deobfuscator.rules;
 
-import com.javadeobfuscator.deobfuscator.*;
-import com.javadeobfuscator.deobfuscator.transformers.*;
-import org.objectweb.asm.*;
-
-import java.util.*;
+import com.javadeobfuscator.deobfuscator.Deobfuscator;
+import com.javadeobfuscator.deobfuscator.transformers.Transformer;
+import java.util.Collection;
+import org.objectweb.asm.Opcodes;
 
 public interface Rule extends Opcodes {
     String getDescription();

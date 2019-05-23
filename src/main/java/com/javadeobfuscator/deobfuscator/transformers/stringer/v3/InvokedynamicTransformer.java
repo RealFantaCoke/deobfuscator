@@ -16,22 +16,32 @@
 
 package com.javadeobfuscator.deobfuscator.transformers.stringer.v3;
 
-import com.javadeobfuscator.deobfuscator.config.*;
-import com.javadeobfuscator.deobfuscator.exceptions.*;
-import com.javadeobfuscator.deobfuscator.transformers.*;
-import com.javadeobfuscator.deobfuscator.utils.*;
-import com.javadeobfuscator.javavm.*;
-import com.javadeobfuscator.javavm.exceptions.*;
-import com.javadeobfuscator.javavm.mirrors.*;
-import com.javadeobfuscator.javavm.nativeimpls.*;
-import com.javadeobfuscator.javavm.values.*;
-import org.objectweb.asm.*;
+import com.javadeobfuscator.deobfuscator.config.TransformerConfig;
+import com.javadeobfuscator.deobfuscator.transformers.Transformer;
+import com.javadeobfuscator.deobfuscator.utils.InstructionModifier;
+import com.javadeobfuscator.deobfuscator.utils.TransformerHelper;
+import com.javadeobfuscator.deobfuscator.utils.Utils;
+import com.javadeobfuscator.javavm.StackTraceHolder;
+import com.javadeobfuscator.javavm.VirtualMachine;
+import com.javadeobfuscator.javavm.exceptions.AbortException;
+import com.javadeobfuscator.javavm.mirrors.JavaClass;
+import com.javadeobfuscator.javavm.nativeimpls.java_lang_Class;
+import com.javadeobfuscator.javavm.values.JavaWrapper;
+import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.tree.*;
-
-import java.lang.reflect.*;
-import java.util.*;
-import java.util.concurrent.atomic.*;
+import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.InsnNode;
+import org.objectweb.asm.tree.InvokeDynamicInsnNode;
+import org.objectweb.asm.tree.LabelNode;
+import org.objectweb.asm.tree.MethodInsnNode;
+import org.objectweb.asm.tree.MethodNode;
 
 public class InvokedynamicTransformer extends Transformer<TransformerConfig> implements Opcodes {
     private VirtualMachine vm;
@@ -46,7 +56,7 @@ public class InvokedynamicTransformer extends Transformer<TransformerConfig> imp
 
         int decrypted = 0;
 
-        for (ClassNode classNode : classes.values()) {
+        for (ClassNode classNode : classes.values())
             for (MethodNode methodNode : new ArrayList<>(classNode.methods)) {
                 InstructionModifier modifier = new InstructionModifier();
 
@@ -54,21 +64,19 @@ public class InvokedynamicTransformer extends Transformer<TransformerConfig> imp
                 int decryptorMethodCount = 0;
 
                 for (AbstractInsnNode insn : TransformerHelper.instructionIterator(methodNode)) {
-                    if (!(insn instanceof InvokeDynamicInsnNode)) {
+                    if (!(insn instanceof InvokeDynamicInsnNode))
                         continue;
-                    }
 
                     InvokeDynamicInsnNode invokeDynamicInsnNode = (InvokeDynamicInsnNode) insn;
-                    if (!invokeDynamicInsnNode.bsm.getOwner().equals(classNode.name)) {
+                    if (!invokeDynamicInsnNode.bsm.getOwner().equals(classNode.name))
                         continue;
-                    }
 
                     MethodNode decryptorMethod = new MethodNode(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, "Decrypt" + decryptorMethodCount++, "()V", null, null);
 
                     Type[] argTypes = Type.getArgumentTypes(invokeDynamicInsnNode.desc);
-                    for (Type type : argTypes) {
+                    for (Type type : argTypes)
                         decryptorMethod.instructions.add(TransformerHelper.zero(type));
-                    }
+
                     decryptorMethod.instructions.add(invokeDynamicInsnNode.clone(cloneMap));
                     decryptorMethod.instructions.add(new InsnNode(RETURN));
 
@@ -100,14 +108,13 @@ public class InvokedynamicTransformer extends Transformer<TransformerConfig> imp
                     logger.debug("Decrypted {} {}{}", indyClass.name, indyMethod.name, indyMethod.desc);
 
                     int opcode;
-                    if (Modifier.isStatic(indyMethod.access)) {
+                    if (Modifier.isStatic(indyMethod.access))
                         opcode = INVOKESTATIC;
-                    } else {
-                        if (Modifier.isInterface(indyClass.access)) {
+                    else {
+                        if (Modifier.isInterface(indyClass.access))
                             opcode = INVOKEINTERFACE;
-                        } else {
+                        else
                             opcode = INVOKEVIRTUAL;
-                        }
                     }
 
                     modifier.replace(invokeDynamicInsnNode, new MethodInsnNode(opcode, indyClass.name, indyMethod.name, indyMethod.desc, opcode == INVOKEINTERFACE));
@@ -117,7 +124,6 @@ public class InvokedynamicTransformer extends Transformer<TransformerConfig> imp
 
                 modifier.apply(methodNode);
             }
-        }
 
         vm.shutdown();
 
@@ -134,23 +140,20 @@ public class InvokedynamicTransformer extends Transformer<TransformerConfig> imp
             info.setReturnValue(vm.getNull());
         });
         vm.beforeCallHooks.add(info -> {
-            if (!info.is("java/lang/Class", "forName0", "(Ljava/lang/String;ZLjava/lang/ClassLoader;Ljava/lang/Class;)Ljava/lang/Class;")) {
+            if (!info.is("java/lang/Class", "forName0", "(Ljava/lang/String;ZLjava/lang/ClassLoader;Ljava/lang/Class;)Ljava/lang/Class;"))
                 return;
-            }
             List<StackTraceHolder> stacktrace = vm.getStacktrace();
-            if (stacktrace.size() < 3) {
+            if (stacktrace.size() < 3)
                 return;
-            }
-            if (!classes.containsKey(stacktrace.get(2).getClassNode().name)) {
+            if (!classes.containsKey(stacktrace.get(2).getClassNode().name))
                 return;
-            }
+
             info.getParams().set(1, vm.newBoolean(false));
         });
 
         vm.beforeCallHooks.add(info -> {
-            if (!info.is("java/lang/invoke/MethodHandles$Lookup", "unreflect", "(Ljava/lang/reflect/Method;)Ljava/lang/invoke/MethodHandle;")) {
+            if (!info.is("java/lang/invoke/MethodHandles$Lookup", "unreflect", "(Ljava/lang/reflect/Method;)Ljava/lang/invoke/MethodHandle;"))
                 return;
-            }
 
             capturedMethod.set(info.getParams().get(0));
             throw AbortException.INSTANCE;

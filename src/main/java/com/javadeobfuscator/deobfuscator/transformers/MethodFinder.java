@@ -16,13 +16,11 @@
 
 package com.javadeobfuscator.deobfuscator.transformers;
 
-import org.apache.commons.lang3.tuple.Pair;
-import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.MethodNode;
-
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.MethodNode;
 
 public interface MethodFinder {
     Map<ClassNode, Set<MethodNode>> find(Collection<ClassNode> classes);

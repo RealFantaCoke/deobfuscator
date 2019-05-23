@@ -17,16 +17,14 @@
 package com.javadeobfuscator.deobfuscator.transformers.general.peephole;
 
 import com.javadeobfuscator.deobfuscator.config.TransformerConfig;
+import com.javadeobfuscator.deobfuscator.transformers.Transformer;
+import com.javadeobfuscator.deobfuscator.utils.Utils;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
-import com.javadeobfuscator.deobfuscator.transformers.Transformer;
-import com.javadeobfuscator.deobfuscator.utils.Utils;
-
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class LdcSwapInvokeSwapPopRemover extends Transformer<TransformerConfig> {
-
     @Override
     public boolean transform() throws Throwable {
         AtomicInteger counter = new AtomicInteger();
@@ -34,7 +32,6 @@ public class LdcSwapInvokeSwapPopRemover extends Transformer<TransformerConfig> 
             classNode.methods.stream().filter(methodNode -> methodNode.instructions.getFirst() != null).forEach(methodNode -> {
                 boolean modified = false;
                 do {
-                    modified = false;
                     for (int i = 0; i < methodNode.instructions.size(); i++) {
                         AbstractInsnNode node = methodNode.instructions.get(i);
                         if (Utils.willPushToStack(node.getOpcode())) {

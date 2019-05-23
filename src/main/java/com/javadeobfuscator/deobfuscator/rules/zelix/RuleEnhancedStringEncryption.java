@@ -16,16 +16,17 @@
 
 package com.javadeobfuscator.deobfuscator.rules.zelix;
 
-import com.javadeobfuscator.deobfuscator.*;
-import com.javadeobfuscator.deobfuscator.rules.*;
-import com.javadeobfuscator.deobfuscator.transformers.*;
-import com.javadeobfuscator.deobfuscator.transformers.zelix.string.*;
-import com.javadeobfuscator.deobfuscator.utils.*;
-import org.objectweb.asm.*;
-import org.objectweb.asm.tree.*;
-
-import java.lang.reflect.*;
-import java.util.*;
+import com.javadeobfuscator.deobfuscator.Deobfuscator;
+import com.javadeobfuscator.deobfuscator.rules.Rule;
+import com.javadeobfuscator.deobfuscator.transformers.Transformer;
+import com.javadeobfuscator.deobfuscator.transformers.zelix.string.EnhancedStringEncryptionTransformer;
+import com.javadeobfuscator.deobfuscator.utils.TransformerHelper;
+import java.lang.reflect.Modifier;
+import java.util.Collection;
+import java.util.Collections;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.MethodNode;
 
 public class RuleEnhancedStringEncryption implements Rule, Opcodes {
     @Override
@@ -37,21 +38,17 @@ public class RuleEnhancedStringEncryption implements Rule, Opcodes {
 
     @Override
     public String test(Deobfuscator deobfuscator) {
-        if (new RuleSuspiciousClinit().test(deobfuscator) == null) {
+        if (new RuleSuspiciousClinit().test(deobfuscator) == null)
             return null;
-        }
-        if (new RuleMethodParameterChangeStringEncryption().test(deobfuscator) != null) {
+        if (new RuleMethodParameterChangeStringEncryption().test(deobfuscator) != null)
             return null;
-        }
 
         for (ClassNode classNode : deobfuscator.getClasses().values()) {
             MethodNode enhanced = TransformerHelper.findMethodNode(classNode, null, "(II)Ljava/lang/String;");
-            if (enhanced == null) {
+            if (enhanced == null)
                 continue;
-            }
-            if (!Modifier.isStatic(enhanced.access)) {
+            if (!Modifier.isStatic(enhanced.access))
                 continue;
-            }
 
             boolean isEnhanced = true;
 
@@ -63,9 +60,8 @@ public class RuleEnhancedStringEncryption implements Rule, Opcodes {
             isEnhanced = isEnhanced && TransformerHelper.countOccurencesOf(enhanced, IXOR) > 0;
             isEnhanced = isEnhanced && TransformerHelper.countOccurencesOf(enhanced, IREM) > 0;
 
-            if (isEnhanced) {
+            if (isEnhanced)
                 return "Found potential enhanced string encrypted class " + classNode.name;
-            }
         }
 
         return null;

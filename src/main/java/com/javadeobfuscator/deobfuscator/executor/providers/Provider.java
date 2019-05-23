@@ -16,14 +16,12 @@
 
 package com.javadeobfuscator.deobfuscator.executor.providers;
 
-import java.util.List;
-
 import com.javadeobfuscator.deobfuscator.executor.Context;
 import com.javadeobfuscator.deobfuscator.executor.values.JavaValue;
+import java.util.List;
 import org.objectweb.asm.Type;
 
 public interface Provider {
-
     Object invokeMethod(String className, String methodName, String methodDesc, JavaValue targetObject, List<JavaValue> args, Context context);
 
     boolean instanceOf(JavaValue target, Type type, Context context);
@@ -41,7 +39,7 @@ public interface Provider {
     boolean canCheckInstanceOf(JavaValue target, Type type, Context context);
 
     boolean canCheckcast(JavaValue target, Type type, Context context);
-    
+
     boolean canCheckEquality(JavaValue first, JavaValue second, Context context);
 
     boolean canGetField(String className, String fieldName, String fieldDesc, JavaValue targetObject, Context context);

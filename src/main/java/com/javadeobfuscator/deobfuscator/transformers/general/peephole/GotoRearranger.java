@@ -17,16 +17,25 @@
 package com.javadeobfuscator.deobfuscator.transformers.general.peephole;
 
 import com.javadeobfuscator.deobfuscator.config.TransformerConfig;
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.tree.*;
 import com.javadeobfuscator.deobfuscator.transformers.Transformer;
 import com.javadeobfuscator.deobfuscator.utils.Utils;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.InsnList;
+import org.objectweb.asm.tree.JumpInsnNode;
+import org.objectweb.asm.tree.LabelNode;
+import org.objectweb.asm.tree.LookupSwitchInsnNode;
+import org.objectweb.asm.tree.TableSwitchInsnNode;
+import org.objectweb.asm.tree.TryCatchBlockNode;
 
 public class GotoRearranger extends Transformer<TransformerConfig> {
-
     @Override
     public boolean transform() throws Throwable {
         AtomicInteger counter = new AtomicInteger();
@@ -53,13 +62,12 @@ public class GotoRearranger extends Transformer<TransformerConfig> {
                             cast.labels.forEach(l -> jumpCount.merge(l, 1, Integer::sum));
                         }
                     }
-                    if (methodNode.tryCatchBlocks != null) {
+                    if (methodNode.tryCatchBlocks != null)
                         methodNode.tryCatchBlocks.forEach(tryCatchBlockNode -> {
                             jumpCount.put(tryCatchBlockNode.start, 999);
                             jumpCount.put(tryCatchBlockNode.end, 999);
                             jumpCount.put(tryCatchBlockNode.handler, 999);
                         });
-                    }
                     never.forEach(n -> jumpCount.put(n, 999));
 
                     for (int i = 0; i < methodNode.instructions.size(); i++) {
@@ -72,9 +80,8 @@ public class GotoRearranger extends Transformer<TransformerConfig> {
                                 if (prev != null) {
                                     boolean ok = Utils.isTerminating(prev);
                                     while (next != null) {
-                                        if (next == node) {
+                                        if (next == node)
                                             ok = false;
-                                        }
                                         if (methodNode.tryCatchBlocks != null) {
                                             for (TryCatchBlockNode tryCatchBlock : methodNode.tryCatchBlocks) {
                                                 int start = methodNode.instructions.indexOf(tryCatchBlock.start);
@@ -83,21 +90,17 @@ public class GotoRearranger extends Transformer<TransformerConfig> {
                                                 if (start <= mid && mid < end) {
                                                     // it's not ok if we're relocating the basic block outside the try-catch block
                                                     int startIndex = methodNode.instructions.indexOf(node);
-                                                    if (startIndex < start || startIndex >= end) {
+                                                    if (startIndex < start || startIndex >= end)
                                                         ok = false;
-                                                    }
                                                 }
                                             }
                                         }
-                                        if (next != cast.label && jumpCount.getOrDefault(next, 0) > 0) {
+                                        if (next != cast.label && jumpCount.getOrDefault(next, 0) > 0)
                                             ok = false;
-                                        }
-                                        if (!ok) {
+                                        if (!ok)
                                             break;
-                                        }
-                                        if (Utils.isTerminating(next)) {
+                                        if (Utils.isTerminating(next))
                                             break;
-                                        }
                                         next = next.getNext();
                                     }
                                     next = cast.label.getNext();
@@ -105,9 +108,9 @@ public class GotoRearranger extends Transformer<TransformerConfig> {
                                         List<AbstractInsnNode> remove = new ArrayList<>();
                                         while (next != null) {
                                             remove.add(next);
-                                            if (Utils.isTerminating(next)) {
+                                            if (Utils.isTerminating(next))
                                                 break;
-                                            }
+
                                             next = next.getNext();
                                         }
                                         InsnList list = new InsnList();

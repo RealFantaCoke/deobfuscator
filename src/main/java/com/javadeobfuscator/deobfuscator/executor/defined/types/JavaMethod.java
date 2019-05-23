@@ -16,16 +16,25 @@
 
 package com.javadeobfuscator.deobfuscator.executor.defined.types;
 
-import java.util.ArrayList;
-import java.util.List;
 import com.google.common.primitives.Primitives;
 import com.javadeobfuscator.deobfuscator.executor.exceptions.ExecutionException;
-import com.javadeobfuscator.deobfuscator.executor.values.*;
-
+import com.javadeobfuscator.deobfuscator.executor.values.JavaArray;
+import com.javadeobfuscator.deobfuscator.executor.values.JavaBoolean;
+import com.javadeobfuscator.deobfuscator.executor.values.JavaByte;
+import com.javadeobfuscator.deobfuscator.executor.values.JavaCharacter;
+import com.javadeobfuscator.deobfuscator.executor.values.JavaDouble;
+import com.javadeobfuscator.deobfuscator.executor.values.JavaFloat;
+import com.javadeobfuscator.deobfuscator.executor.values.JavaInteger;
+import com.javadeobfuscator.deobfuscator.executor.values.JavaLong;
+import com.javadeobfuscator.deobfuscator.executor.values.JavaObject;
+import com.javadeobfuscator.deobfuscator.executor.values.JavaShort;
+import com.javadeobfuscator.deobfuscator.executor.values.JavaValue;
+import com.javadeobfuscator.deobfuscator.utils.PrimitiveUtils;
+import java.util.ArrayList;
+import java.util.List;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.MethodNode;
-import com.javadeobfuscator.deobfuscator.utils.PrimitiveUtils;
 
 public class JavaMethod {
     private final JavaClass clazz;
@@ -50,9 +59,9 @@ public class JavaMethod {
 
     public JavaClass getReturnType() {
         Class<?> primitive = PrimitiveUtils.getPrimitiveByName(Type.getReturnType(method.desc).getClassName());
-        if (primitive != null) {
+        if (primitive != null)
             return new JavaClass(Type.getReturnType(method.desc).getClassName(), clazz.getContext());
-        }
+
         return new JavaClass(Type.getReturnType(method.desc).getInternalName(), clazz.getContext());
     }
 
@@ -64,13 +73,13 @@ public class JavaMethod {
         List<JavaClass> params = new ArrayList<>();
         for (Type type : Type.getArgumentTypes(method.desc)) {
             Class<?> primitive = PrimitiveUtils.getPrimitiveByName(type.getClassName());
-            if (primitive != null) {
+            if (primitive != null)
                 params.add(new JavaClass(type.getClassName(), clazz.getContext()));
-            } else {
+            else
                 params.add(new JavaClass(type.getInternalName(), clazz.getContext()));
-            }
+
         }
-        return params.toArray(new JavaClass[params.size()]);
+        return params.toArray(new JavaClass[0]);
     }
 
     public MethodNode getMethodNode() {
@@ -83,79 +92,71 @@ public class JavaMethod {
     }
 
     public Object invoke(JavaValue instance, JavaValue argsObject) {
-    	Object[] args; 
-    	String[] argTypes;
-    	if(argsObject.value() == null) 
-    	{
-    		args = null;
-    		argTypes = null;
-    	}else
-    	{
-    		args = (Object[])((JavaArray)argsObject).value();
-    		argTypes = ((JavaArray)argsObject).getTypeArray();
-    	}
+        Object[] args;
+        String[] argTypes;
+        if (argsObject.value() == null) {
+            args = null;
+            argTypes = null;
+        } else {
+            args = (Object[]) argsObject.value();
+            argTypes = ((JavaArray) argsObject).getTypeArray();
+        }
         try {
-        	//Fix for unboxing/boxing
-        	List<Integer> fixed = new ArrayList<>();
-            if(args != null && args.length == getParameterTypes().length)
-            	for(int i = 0; i < args.length; i++)
-            	{
-            		Object o = args[i];
-            		JavaClass[] params = getParameterTypes();
-            		JavaClass argClass = params[i];
-            		if(argClass.isPrimitive())
-            		{
-            			Object value = o;
-            			if(Primitives.unwrap(value.getClass()).getName().equals(argClass.getName()))
-	            			switch(argClass.getName())
-	            			{
-	            				case "boolean":
-	            					args[i] = new JavaBoolean((Boolean)o);
-	            					fixed.add(i);
-	            					break;
-	            				case "byte":
-	            					args[i] = new JavaByte((Byte)o);
-	            					fixed.add(i);
-	            					break;
-	            				case "char":
-	            					args[i] = new JavaCharacter((Character)o);
-	            					fixed.add(i);
-	            					break;
-	            				case "double":
-	            					args[i] = new JavaDouble((Double)o);
-	            					fixed.add(i);
-	            					break;
-	            				case "float":
-	            					args[i] = new JavaFloat((Float)o);
-	            					fixed.add(i);
-	            					break;
-	            				case "int":
-	            					args[i] = new JavaInteger((Integer)o);
-	            					fixed.add(i);
-	            					break;
-	            				case "long":
-	            					args[i] = new JavaLong((Long)o);
-	            					fixed.add(i);
-	            					break;
-	            				case "short":
-	            					args[i] = new JavaShort((Short)o);
-	            					fixed.add(i);
-	            					break;
-	            			}
-            		}
-            	}
+            //Fix for unboxing/boxing
+            List<Integer> fixed = new ArrayList<>();
+            if (args != null && args.length == getParameterTypes().length)
+                for (int i = 0; i < args.length; i++) {
+                    Object o = args[i];
+                    JavaClass[] params = getParameterTypes();
+                    JavaClass argClass = params[i];
+                    if (argClass.isPrimitive())
+                        if (Primitives.unwrap(o.getClass()).getName().equals(argClass.getName()))
+                            switch (argClass.getName()) {
+                                case "boolean":
+                                    args[i] = new JavaBoolean((Boolean) o);
+                                    fixed.add(i);
+                                    break;
+                                case "byte":
+                                    args[i] = new JavaByte((Byte) o);
+                                    fixed.add(i);
+                                    break;
+                                case "char":
+                                    args[i] = new JavaCharacter((Character) o);
+                                    fixed.add(i);
+                                    break;
+                                case "double":
+                                    args[i] = new JavaDouble((Double) o);
+                                    fixed.add(i);
+                                    break;
+                                case "float":
+                                    args[i] = new JavaFloat((Float) o);
+                                    fixed.add(i);
+                                    break;
+                                case "int":
+                                    args[i] = new JavaInteger((Integer) o);
+                                    fixed.add(i);
+                                    break;
+                                case "long":
+                                    args[i] = new JavaLong((Long) o);
+                                    fixed.add(i);
+                                    break;
+                                case "short":
+                                    args[i] = new JavaShort((Short) o);
+                                    fixed.add(i);
+                                    break;
+                            }
+                }
             List<JavaValue> argsobjects = new ArrayList<>();
             if (args != null) {
                 for (int i = 0; i < args.length; i++) {
-                	Object o = args[i];
-                	if(!fixed.contains(i))
-                	{
-                		if(o != null && o.getClass().isArray())
-                			argsobjects.add(new JavaArray(o));
+                    Object o = args[i];
+                    if (!fixed.contains(i)) {
+                        if (o != null && o.getClass().isArray())
+                            argsobjects.add(new JavaArray(o));
                         else
-                        	argsobjects.add(new JavaObject(o, argTypes[i]));
-                	}else
-                		argsobjects.add((JavaValue)o);
+                            argsobjects.add(new JavaObject(o, argTypes[i]));
+                    } else
+                        argsobjects.add((JavaValue) o);
                 }
             }
 
@@ -189,6 +190,7 @@ public class JavaMethod {
                 return false;
         } else if (!method.equals(other.method))
             return false;
+
         return true;
     }
 

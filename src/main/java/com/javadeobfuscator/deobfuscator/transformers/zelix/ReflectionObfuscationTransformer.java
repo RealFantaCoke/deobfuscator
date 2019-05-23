@@ -18,11 +18,21 @@ package com.javadeobfuscator.deobfuscator.transformers.zelix;
 
 import com.javadeobfuscator.deobfuscator.analyzer.AnalyzerResult;
 import com.javadeobfuscator.deobfuscator.analyzer.MethodAnalyzer;
-import com.javadeobfuscator.deobfuscator.analyzer.frame.*;
+import com.javadeobfuscator.deobfuscator.analyzer.frame.ArrayStoreFrame;
+import com.javadeobfuscator.deobfuscator.analyzer.frame.DupFrame;
+import com.javadeobfuscator.deobfuscator.analyzer.frame.FieldFrame;
+import com.javadeobfuscator.deobfuscator.analyzer.frame.Frame;
+import com.javadeobfuscator.deobfuscator.analyzer.frame.LdcFrame;
+import com.javadeobfuscator.deobfuscator.analyzer.frame.MethodFrame;
+import com.javadeobfuscator.deobfuscator.analyzer.frame.NewArrayFrame;
 import com.javadeobfuscator.deobfuscator.config.TransformerConfig;
 import com.javadeobfuscator.deobfuscator.executor.Context;
 import com.javadeobfuscator.deobfuscator.executor.MethodExecutor;
-import com.javadeobfuscator.deobfuscator.executor.defined.*;
+import com.javadeobfuscator.deobfuscator.executor.defined.JVMComparisonProvider;
+import com.javadeobfuscator.deobfuscator.executor.defined.JVMMethodProvider;
+import com.javadeobfuscator.deobfuscator.executor.defined.MappedFieldProvider;
+import com.javadeobfuscator.deobfuscator.executor.defined.MappedMethodProvider;
+import com.javadeobfuscator.deobfuscator.executor.defined.PrimitiveFieldProvider;
 import com.javadeobfuscator.deobfuscator.executor.defined.types.JavaClass;
 import com.javadeobfuscator.deobfuscator.executor.defined.types.JavaField;
 import com.javadeobfuscator.deobfuscator.executor.defined.types.JavaMethod;
@@ -30,17 +40,36 @@ import com.javadeobfuscator.deobfuscator.executor.providers.ComparisonProvider;
 import com.javadeobfuscator.deobfuscator.executor.providers.DelegatingProvider;
 import com.javadeobfuscator.deobfuscator.executor.values.JavaLong;
 import com.javadeobfuscator.deobfuscator.executor.values.JavaValue;
+import com.javadeobfuscator.deobfuscator.transformers.Transformer;
+import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.tree.*;
-import com.javadeobfuscator.deobfuscator.transformers.Transformer;
-
-import java.lang.reflect.Modifier;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
+import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.FieldInsnNode;
+import org.objectweb.asm.tree.FieldNode;
+import org.objectweb.asm.tree.InsnList;
+import org.objectweb.asm.tree.InsnNode;
+import org.objectweb.asm.tree.LdcInsnNode;
+import org.objectweb.asm.tree.MethodInsnNode;
+import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.TryCatchBlockNode;
+import org.objectweb.asm.tree.TypeInsnNode;
+import org.objectweb.asm.tree.VarInsnNode;
 
 public class ReflectionObfuscationTransformer extends Transformer<TransformerConfig> {
-    static Map<String, String> PRIMITIVES = new HashMap<>();
+    private static Map<String, String> PRIMITIVES = new HashMap<>();
 
     static {
         PRIMITIVES.put("boolean", "java/lang/Boolean");
@@ -86,20 +115,21 @@ public class ReflectionObfuscationTransformer extends Transformer<TransformerCon
 
             @Override
             public boolean checkcast(JavaValue target, Type type, Context context) {
-                if (type.getInternalName().equals("java/lang/String")) {
-                    return target.value() instanceof String;
-                } else if (type.getInternalName().equals("java/lang/Class")) {
-                    return target.value() instanceof JavaClass || target.value() instanceof Type; //TODO consolidate types
-                } else if (type.getInternalName().equals("java/lang/reflect/Method")) {
-                    return target.value() instanceof JavaMethod;
-                } else if (type.getInternalName().equals("java/lang/reflect/Field")) {
-                    return target.value() instanceof JavaField;
-                } else if (type.getInternalName().equals("[Ljava/lang/reflect/Method;")) {
-                    return target.value() instanceof Object[];
-                } else if (type.getInternalName().equals("[Ljava/lang/Class;")) {
-                    return target.value() instanceof Object[];
+                switch (type.getInternalName()) {
+                    case "java/lang/String":
+                        return target.value() instanceof String;
+                    case "java/lang/Class":
+                        return target.value() instanceof JavaClass || target.value() instanceof Type; //TODO consolidate types
+                    case "java/lang/reflect/Method":
+                        return target.value() instanceof JavaMethod;
+                    case "java/lang/reflect/Field":
+                        return target.value() instanceof JavaField;
+                    case "[Ljava/lang/reflect/Method;":
+                    case "[Ljava/lang/Class;":
+                        return target.value() instanceof Object[];
+                    default:
+                        return false;
                 }
-                return false;
             }
 
             @Override
@@ -157,17 +187,16 @@ public class ReflectionObfuscationTransformer extends Transformer<TransformerCon
                     int i = 0;
                     while (i < methodNode.instructions.size()) {
                         current = methodNode.instructions.get(i++);
-                        if (current == null) {
+                        if (current == null)
                             continue;
-                        }
-                        if (current instanceof MethodInsnNode) {
 
+                        if (current instanceof MethodInsnNode) {
                             MethodInsnNode methodInsnNode = (MethodInsnNode) current;
                             if (methodInsnNode.desc.equals("(J)Ljava/lang/reflect/Method;")) {
                                 long ldc = (long) ((LdcInsnNode) current.getPrevious()).cst;
                                 String strCl = methodInsnNode.owner;
                                 ClassNode innerClassNode = classpath.get(strCl);
-                                if (initted.add(innerClassNode)) {
+                                if (initted.add(innerClassNode))
                                     try {
                                         MethodNode decrypterNode = innerClassNode.methods.stream().filter(mn -> mn.name.equals("<clinit>")).findFirst().orElse(null);
                                         Context context = new Context(provider);
@@ -177,7 +206,6 @@ public class ReflectionObfuscationTransformer extends Transformer<TransformerCon
                                         System.out.println("Error while fully initializing  " + strCl);
                                         t.printStackTrace(System.out);
                                     }
-                                }
 
                                 MethodNode decrypterNode = innerClassNode.methods.stream().filter(mn -> mn.name.equals(methodInsnNode.name) && mn.desc.equals(methodInsnNode.desc)).findFirst().orElse(null);
                                 Context ctx = new Context(provider);
@@ -196,9 +224,9 @@ public class ReflectionObfuscationTransformer extends Transformer<TransformerCon
                                     JavaClass param = javaMethod.getParameterTypes()[x];
                                     replacement.add(new InsnNode(Opcodes.DUP));
                                     replacement.add(new LdcInsnNode(x));
-                                    if (param.isPrimitive()) {
+                                    if (param.isPrimitive())
                                         replacement.add(new FieldInsnNode(Opcodes.GETSTATIC, PRIMITIVES.get(param.getName()), "TYPE", "Ljava/lang/Class;"));
-                                    } else {
+                                    else {
                                         String pp = param.getName().replace('.', '/');
                                         Type t1 = Type.getObjectType(pp);
                                         replacement.add(new LdcInsnNode(t1));
@@ -251,7 +279,7 @@ public class ReflectionObfuscationTransformer extends Transformer<TransformerCon
                 if (found && false) {
                     int maxLocals = -1;
 
-                    boolean modified = false;
+                    boolean modified;
                     outer:
                     do {
                         AnalyzerResult result = MethodAnalyzer.analyze(classes.get(classNode.name), methodNode);
@@ -267,13 +295,13 @@ public class ReflectionObfuscationTransformer extends Transformer<TransformerCon
                                     List<Frame> frames = analysis.get(cast);
                                     if (frames != null) {
                                         Map<AbstractInsnNode, Frame> tmp = new HashMap<>();
-                                        for (Frame frame : frames) {
+                                        for (Frame frame : frames)
                                             tmp.put(reverseMapping.get(frame), frame);
-                                        }
+
                                         frames = new ArrayList<>(tmp.values());
-                                        if (frames.size() != 1) {
+                                        if (frames.size() != 1)
                                             throw new IllegalArgumentException("Expected only one frame, but got " + frames.size());
-                                        }
+
                                         MethodFrame methodFrame = (MethodFrame) frames.get(0);
                                         if (methodFrame.getInstance() instanceof MethodFrame) {
                                             MethodFrame instance = (MethodFrame) methodFrame.getInstance();
@@ -342,49 +370,48 @@ public class ReflectionObfuscationTransformer extends Transformer<TransformerCon
                                                 }
                                                 VarInsnNode vin = new VarInsnNode(opcode, index);
                                                 store.add(vin);
-                                                if (first == null) {
+                                                if (first == null)
                                                     first = vin;
-                                                }
+
                                                 indices.add(0, index);
                                                 index += size;
                                             }
                                             store.add(new InsnNode(Opcodes.ACONST_NULL));
 
-                                            if (toArray.getNext().getOpcode() == Opcodes.CHECKCAST) {
+                                            if (toArray.getNext().getOpcode() == Opcodes.CHECKCAST)
                                                 methodNode.instructions.remove(toArray.getNext());
-                                            }
+
                                             methodNode.instructions.insert(toArray, store);
                                             methodNode.instructions.remove(toArray);
 
                                             MethodNode target = null;
                                             ClassNode startingNode = classpath.get(findClass);
-                                            if (startingNode == null) {
+                                            if (startingNode == null)
                                                 throw new IllegalArgumentException(findClass);
-                                            }
+
                                             ClassNode currentNode = startingNode;
                                             LinkedList<ClassNode> candidates = new LinkedList<>();
                                             candidates.add(currentNode);
                                             loop:
                                             while (!candidates.isEmpty()) {
                                                 currentNode = candidates.pop();
-                                                for (MethodNode possible : currentNode.methods) {
+                                                for (MethodNode possible : currentNode.methods)
                                                     if (possible.name.equals(findMethod) && possible.desc.startsWith(findDesc)) {
                                                         target = possible;
                                                         break loop;
                                                     }
-                                                }
                                                 if (!currentNode.name.equals("java/lang/Object")) {
                                                     ClassNode newCurrent = classpath.get(currentNode.superName);
-                                                    if (newCurrent == null) {
+                                                    if (newCurrent == null)
                                                         throw new IllegalArgumentException(currentNode.name + " " + findMethod + findDesc);
-                                                    }
+
                                                     candidates.add(newCurrent);
                                                 }
                                                 for (String intf : currentNode.interfaces) {
                                                     ClassNode newCurrent = classpath.get(intf);
-                                                    if (newCurrent == null) {
+                                                    if (newCurrent == null)
                                                         throw new IllegalArgumentException(intf + " " + findMethod + findDesc);
-                                                    }
+
                                                     candidates.add(newCurrent);
                                                 }
                                             }
@@ -392,11 +419,11 @@ public class ReflectionObfuscationTransformer extends Transformer<TransformerCon
                                             if (target != null) {
                                                 InsnList replacement = new InsnList();
                                                 replacement.add(new InsnNode(Opcodes.POP));
-                                                if (!Modifier.isStatic(target.access)) {
+                                                if (!Modifier.isStatic(target.access))
                                                     replacement.add(new InsnNode(Opcodes.SWAP));
-                                                } else {
+                                                else
                                                     replacement.add(new InsnNode(Opcodes.POP));
-                                                }
+
                                                 replacement.add(new InsnNode(Opcodes.POP));
                                                 Collections.reverse(types);
                                                 int ind = 0;
@@ -439,15 +466,13 @@ public class ReflectionObfuscationTransformer extends Transformer<TransformerCon
                                                 MethodInsnNode methodinsnnode = new MethodInsnNode(Modifier.isStatic(target.access) ? Opcodes.INVOKESTATIC : Modifier.isInterface(target.access) ? Opcodes.INVOKEINTERFACE : Opcodes.INVOKEVIRTUAL, findClass, target.name, target.desc, Modifier.isInterface(target.access));
                                                 replacement.add(methodinsnnode);
                                                 int returnType = Type.getReturnType(target.desc).getSort();
-                                                if (returnType == Type.VOID) {
+                                                if (returnType == Type.VOID)
                                                     replacement.add(new InsnNode(Opcodes.ACONST_NULL));
-                                                } else if (returnType != Type.OBJECT && returnType != Type.ARRAY) {
-                                                    if (cast.getNext().getOpcode() == Opcodes.CHECKCAST) {
+                                                else if (returnType != Type.OBJECT && returnType != Type.ARRAY) {
+                                                    if (cast.getNext().getOpcode() == Opcodes.CHECKCAST)
                                                         methodNode.instructions.remove(cast.getNext());
-                                                    }
-                                                    if (cast.getNext().getOpcode() == Opcodes.INVOKEVIRTUAL) {
+                                                    if (cast.getNext().getOpcode() == Opcodes.INVOKEVIRTUAL)
                                                         methodNode.instructions.remove(cast.getNext());
-                                                    }
                                                 }
 
                                                 methodNode.instructions.insert(cast, replacement);
@@ -473,11 +498,10 @@ public class ReflectionObfuscationTransformer extends Transformer<TransformerCon
                                                         methodNode.instructions.remove(reverseMapping.get(asf.getIndex()));
                                                         methodNode.instructions.remove(reverseMapping.get(asf.getObject()));
                                                         methodNode.instructions.remove(reverseMapping.get(fr));
-                                                    } else if (fr instanceof DupFrame) {
+                                                    } else if (fr instanceof DupFrame)
                                                         methodNode.instructions.remove(reverseMapping.get(fr));
-                                                    } else if (fr != instance) {
+                                                    else if (fr != instance)
                                                         throw new IllegalArgumentException(fr.toString());
-                                                    }
                                                 });
 //
 //                                            List<AbstractInsnNode> toRemove = new ArrayList<>();
@@ -514,15 +538,14 @@ public class ReflectionObfuscationTransformer extends Transformer<TransformerCon
 //                                                }
 //                                            }
 //                                            toRemove.forEach(methodNode.instructions::remove);
-                                            } else {
+                                            } else
                                                 System.out.println("Could not find " + findMethod + findDesc + " in " + findClass);
-                                            }
+
                                             modified = true;
                                             continue outer;
                                         }
-                                    } else {
+                                    } else
                                         System.out.println("Null frame?");
-                                    }
                                 } else if (cast.owner.equals("java/lang/reflect/Field")) {
 
                                 }
@@ -531,12 +554,7 @@ public class ReflectionObfuscationTransformer extends Transformer<TransformerCon
                     } while (modified);
                     if (methodNode.tryCatchBlocks != null) {
                         Iterator<TryCatchBlockNode> it = methodNode.tryCatchBlocks.iterator();
-                        while (it.hasNext()) {
-                            TryCatchBlockNode next = it.next();
-                            if (next.type != null && next.type.startsWith("java/lang/reflect")) {
-                                it.remove();
-                            }
-                        }
+                        methodNode.tryCatchBlocks.removeIf(next -> next.type != null && next.type.startsWith("java/lang/reflect"));
                     }
                 }
             });
@@ -551,20 +569,19 @@ public class ReflectionObfuscationTransformer extends Transformer<TransformerCon
     private String frameToDesc(NewArrayFrame frame) {
         StringBuilder builder = new StringBuilder("(");
         int index = 0;
-        for (Frame child : frame.getChildren()) {
+        for (Frame child : frame.getChildren())
             if (child instanceof ArrayStoreFrame) {
                 ArrayStoreFrame arrayStore = (ArrayStoreFrame) child;
                 int nowIndex = (int) ((LdcFrame) arrayStore.getIndex()).getConstant();
-                if (nowIndex != index) {
+                if (nowIndex != index)
                     throw new IllegalArgumentException("Index mismatch");
-                }
 
                 Frame value = arrayStore.getObject();
-                if (value instanceof LdcFrame) {
+                if (value instanceof LdcFrame)
                     builder.append(((Type) ((LdcFrame) value).getConstant()).getDescriptor());
-                } else if (value instanceof FieldFrame) {
+                else if (value instanceof FieldFrame) {
                     FieldFrame fieldFrame = (FieldFrame) value;
-                    String desc = null;
+                    String desc;
                     switch (fieldFrame.getOwner()) {
                         case "java/lang/Integer":
                             desc = "I";
@@ -594,13 +611,11 @@ public class ReflectionObfuscationTransformer extends Transformer<TransformerCon
                             throw new IllegalStateException(fieldFrame.getOwner());
                     }
                     builder.append(desc);
-                } else {
+                } else
                     throw new IllegalArgumentException("Unexpected frame " + value);
-                }
 
                 index++;
             }
-        }
 
         builder.append(")");
         return builder.toString();
@@ -614,9 +629,8 @@ public class ReflectionObfuscationTransformer extends Transformer<TransformerCon
                     AbstractInsnNode current = methodNode.instructions.get(i);
                     if (current instanceof MethodInsnNode) {
                         MethodInsnNode methodInsnNode = (MethodInsnNode) current;
-                        if (methodInsnNode.desc.equals("(J)Ljava/lang/reflect/Method;") || methodInsnNode.desc.equals("(J)Ljava/lang/reflect/Field;")) {
+                        if (methodInsnNode.desc.equals("(J)Ljava/lang/reflect/Method;") || methodInsnNode.desc.equals("(J)Ljava/lang/reflect/Field;"))
                             count.incrementAndGet();
-                        }
                     }
                 }
             });

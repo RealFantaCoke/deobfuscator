@@ -16,15 +16,16 @@
 
 package com.javadeobfuscator.deobfuscator.rules.zelix;
 
-import com.javadeobfuscator.deobfuscator.*;
-import com.javadeobfuscator.deobfuscator.rules.*;
-import com.javadeobfuscator.deobfuscator.transformers.*;
-import com.javadeobfuscator.deobfuscator.transformers.zelix.*;
-import com.javadeobfuscator.deobfuscator.utils.*;
-import org.objectweb.asm.*;
-import org.objectweb.asm.tree.*;
-
-import java.util.*;
+import com.javadeobfuscator.deobfuscator.Deobfuscator;
+import com.javadeobfuscator.deobfuscator.rules.Rule;
+import com.javadeobfuscator.deobfuscator.transformers.Transformer;
+import com.javadeobfuscator.deobfuscator.transformers.zelix.ReflectionObfuscationTransformer;
+import com.javadeobfuscator.deobfuscator.utils.TransformerHelper;
+import java.util.Collection;
+import java.util.Collections;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.MethodNode;
 
 public class RuleReflectionDecryptor implements Rule, Opcodes {
     @Override
@@ -41,17 +42,15 @@ public class RuleReflectionDecryptor implements Rule, Opcodes {
             isZKM = isZKM && TransformerHelper.findFieldNodes(classNode, null, "[Ljava/lang/String;").size() == 3;
 
             MethodNode deobfuscateMethod = TransformerHelper.findMethodNode(classNode, null, "(J)Ljava/lang/reflect/Method;");
-            if (deobfuscateMethod == null) {
+            if (deobfuscateMethod == null)
                 continue;
-            }
 
             isZKM = isZKM && TransformerHelper.containsInvokeStatic(deobfuscateMethod, "java/lang/Long", "parseLong", "(Ljava/lang/String;I)J");
             isZKM = isZKM && TransformerHelper.containsInvokeVirtual(deobfuscateMethod, "java/lang/Class", "getSuperclass", "()Ljava/lang/Class;");
             isZKM = isZKM && TransformerHelper.containsInvokeVirtual(deobfuscateMethod, "java/lang/Class", "getInterfaces", "()[Ljava/lang/Class;");
 
-            if (isZKM) {
+            if (isZKM)
                 return "Found possible reflection deobfuscation class: " + classNode.name;
-            }
         }
 
         return null;

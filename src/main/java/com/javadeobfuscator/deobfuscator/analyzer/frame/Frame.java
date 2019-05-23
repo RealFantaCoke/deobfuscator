@@ -4,9 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.javadeobfuscator.deobfuscator.analyzer.Value;
 import com.javadeobfuscator.deobfuscator.utils.RuntimeTypeAdapterFactory;
-
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 
 public class Frame {
@@ -67,20 +65,19 @@ public class Frame {
     protected transient List<Frame> parents = new ArrayList<>(); // Represents all the frames which contributed to creating this frame
     protected transient List<Frame> children = new ArrayList<>(); // Represents all the frames which this frame was involved in
 
-//    private transient LinkedList<Value> locals = new LinkedList<>();
+    //    private transient LinkedList<Value> locals = new LinkedList<>();
 //    private transient LinkedList<Value> stack = new LinkedList<>();
     private transient Value[] localsArr;
     private transient Value[] stackArr;
-    
+
     private Boolean isConstant;
 
     public Frame(int opcode) {
         this.opcode = opcode;
-        if (opcode == -1) {
+        if (opcode == -1)
             this.mnemonic = "-1";
-        } else {
+        else
             this.mnemonic = OPCODE_NAMES[opcode];
-        }
     }
 
     public final int getOpcode() {
@@ -92,16 +89,14 @@ public class Frame {
     }
 
 //    public Value getLocalAt(int index) {
-//        if (localsArr == null) {
+//        if (localsArr == null)
 //            localsArr = locals.toArray(new Value[locals.size()]);
-//        }
 //        return localsArr[index];
 //    }
 
 //    public Value getStackAt(int index) {
-//        if (stackArr == null) {
+//        if (stackArr == null)
 //            stackArr = stack.toArray(new Value[stack.size()]);
-//        }
 //        return stackArr[index];
 //    }
 
@@ -114,30 +109,30 @@ public class Frame {
 //        this.stack.add(value);
 //        this.stackArr = null;
     }
-    
+
     public boolean isConstant() {
-        if (isConstant == null) {
+        if (isConstant == null)
             calculateConstant();
-        }
+
         return isConstant;
     }
-    
+
     private void calculateConstant() {
         boolean constant = true;
-        for (Frame frame : parents) {
+        for (Frame frame : parents)
             constant &= frame.isConstant();
-        }
-        this.isConstant = constant; 
+
+        this.isConstant = constant;
     }
-    
+
     @Override
     public String toString() {
         isConstant();
-        return GSON.toJson(this, Frame.class);    
+        return GSON.toJson(this, Frame.class);
     }
 
     private static final Gson GSON;
-    
+
     static {
         RuntimeTypeAdapterFactory<Frame> typeAdapterFactory = RuntimeTypeAdapterFactory.of(Frame.class);
         typeAdapterFactory.registerSubtype(ArgumentFrame.class)

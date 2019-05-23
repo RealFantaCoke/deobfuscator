@@ -32,9 +32,9 @@ public class OptionalStep implements Step {
     @Override
     public AbstractInsnNode tryMatch(InstructionMatcher matcher, AbstractInsnNode now) {
         AbstractInsnNode next = step.tryMatch(matcher, now);
-        if (next != null) {
+        if (next != null)
             return next;
-        }
+
         // no progress was made
         return now;
     }

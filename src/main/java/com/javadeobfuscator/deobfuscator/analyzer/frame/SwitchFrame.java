@@ -16,10 +16,9 @@
 
 package com.javadeobfuscator.deobfuscator.analyzer.frame;
 
-import org.objectweb.asm.tree.LabelNode;
-
 import java.util.ArrayList;
 import java.util.List;
+import org.objectweb.asm.tree.LabelNode;
 
 public class SwitchFrame extends Frame {
     private Frame switchTarget;

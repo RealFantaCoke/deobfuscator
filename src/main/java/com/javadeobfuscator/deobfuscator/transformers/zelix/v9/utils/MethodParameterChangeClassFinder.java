@@ -16,16 +16,14 @@
 
 package com.javadeobfuscator.deobfuscator.transformers.zelix.v9.utils;
 
-import com.javadeobfuscator.deobfuscator.graph.inheritancegraph.InheritanceGraph;
 import com.javadeobfuscator.deobfuscator.transformers.ClassFinder;
 import com.javadeobfuscator.deobfuscator.utils.TransformerHelper;
-import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.MethodNode;
-
 import java.lang.reflect.Modifier;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.MethodNode;
 
 public class MethodParameterChangeClassFinder implements ClassFinder {
     @Override
@@ -41,15 +39,14 @@ public class MethodParameterChangeClassFinder implements ClassFinder {
     private Set<ClassNode> findImplementations(Collection<ClassNode> classes, Set<ClassNode> interfaces) {
         Set<ClassNode> result = new HashSet<>();
         for (ClassNode classNode : classes) {
-            if (classNode.interfaces == null) {
+            if (classNode.interfaces == null)
                 continue;
-            }
-            for (ClassNode intf : interfaces) {
+
+            for (ClassNode intf : interfaces)
                 if (classNode.interfaces.contains(intf.name)) {
                     result.add(classNode);
                     break;
                 }
-            }
         }
         return result;
     }
@@ -57,23 +54,21 @@ public class MethodParameterChangeClassFinder implements ClassFinder {
     private Set<ClassNode> findInterfaces(Collection<ClassNode> classes) {
         Set<ClassNode> result = new HashSet<>();
         for (ClassNode classNode : classes) {
-            if (!Modifier.isInterface(classNode.access)) {
+            if (!Modifier.isInterface(classNode.access))
                 continue;
-            }
+
             MethodNode intArr = TransformerHelper.findMethodNode(classNode, null, "()[I");
-            if (intArr == null) {
+            if (intArr == null)
                 continue;
-            }
-            if (Modifier.isStatic(intArr.access) || !Modifier.isAbstract(intArr.access)) {
+            if (Modifier.isStatic(intArr.access) || !Modifier.isAbstract(intArr.access))
                 continue;
-            }
+
             MethodNode boolRet = TransformerHelper.findMethodNode(classNode, null, "(Ljava/lang/Object;)I", true);
-            if (boolRet == null) {
+            if (boolRet == null)
                 continue;
-            }
-            if (Modifier.isStatic(boolRet.access) || !Modifier.isAbstract(boolRet.access)) {
+            if (Modifier.isStatic(boolRet.access) || !Modifier.isAbstract(boolRet.access))
                 continue;
-            }
+
             result.add(classNode);
         }
         return result;

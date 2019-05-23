@@ -37,19 +37,17 @@ public class InvocationStep implements Step {
 
     @Override
     public AbstractInsnNode tryMatch(InstructionMatcher matcher, AbstractInsnNode now) {
-        if (opcode != -1 && now.getOpcode() != opcode) {
+        if (opcode != -1 && now.getOpcode() != opcode)
             return null;
-        }
-        if (!(now instanceof MethodInsnNode)) {
+        if (!(now instanceof MethodInsnNode))
             return null;
-        }
         MethodInsnNode methodInsnNode = (MethodInsnNode) now;
         boolean ownerMatches = owner == null || methodInsnNode.owner.equals(owner);
         boolean nameMatches = name == null || methodInsnNode.name.equals(name);
         boolean descMatches = desc == null || (basic ? TransformerHelper.basicType(methodInsnNode.desc) : methodInsnNode.desc).equals(desc);
-        if (!ownerMatches || !nameMatches || !descMatches) {
+        if (!ownerMatches || !nameMatches || !descMatches)
             return null;
-        }
+
         return now.getNext();
     }
 }

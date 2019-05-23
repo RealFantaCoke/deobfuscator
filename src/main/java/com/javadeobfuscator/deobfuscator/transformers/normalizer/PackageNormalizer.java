@@ -17,24 +17,22 @@
 package com.javadeobfuscator.deobfuscator.transformers.normalizer;
 
 import com.javadeobfuscator.deobfuscator.config.TransformerConfig;
-
 import java.util.concurrent.atomic.AtomicInteger;
 
 @TransformerConfig.ConfigOptions(configClass = PackageNormalizer.Config.class)
 public class PackageNormalizer extends AbstractNormalizer<PackageNormalizer.Config> {
-
     @Override
     public void remap(CustomRemapper remapper) {
         AtomicInteger id = new AtomicInteger(0);
         classNodes().forEach(classNode -> {
             String packageName = classNode.name.lastIndexOf('/') == -1 ? "" : classNode.name.substring(0, classNode.name.lastIndexOf('/'));
             if (packageName.length() > 0) {
-                int lin = -1;
+                int lin;
                 while ((lin = packageName.lastIndexOf('/')) != -1) {
                     String parentPackage = packageName.substring(0, lin);
-                    if (!remapper.mapPackage(packageName, parentPackage + "/package" + id.getAndIncrement())) {
+                    if (!remapper.mapPackage(packageName, parentPackage + "/package" + id.getAndIncrement()))
                         break;
-                    }
+
                     packageName = parentPackage;
                 }
                 remapper.mapPackage(packageName, "package" + id.getAndIncrement());

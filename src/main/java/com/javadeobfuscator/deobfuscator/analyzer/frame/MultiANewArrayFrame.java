@@ -16,9 +16,8 @@
 
 package com.javadeobfuscator.deobfuscator.analyzer.frame;
 
-import org.objectweb.asm.Opcodes;
-
 import java.util.List;
+import org.objectweb.asm.Opcodes;
 
 public class MultiANewArrayFrame extends Frame {
     private List<Frame> dims;
@@ -26,8 +25,7 @@ public class MultiANewArrayFrame extends Frame {
     public MultiANewArrayFrame(List<Frame> dims) {
         super(Opcodes.MULTIANEWARRAY);
         this.dims = dims;
-        for (Frame dim : this.dims) {
+        for (Frame dim : this.dims)
             dim.children.add(this);
-        }
     }
 }

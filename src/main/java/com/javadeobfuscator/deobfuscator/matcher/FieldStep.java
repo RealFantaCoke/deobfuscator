@@ -37,16 +37,16 @@ public class FieldStep implements Step {
 
     @Override
     public AbstractInsnNode tryMatch(InstructionMatcher matcher, AbstractInsnNode now) {
-        if (opcode != -1 && now.getOpcode() != opcode) {
+        if (opcode != -1 && now.getOpcode() != opcode)
             return null;
-        }
+
         FieldInsnNode fieldInsnNode = (FieldInsnNode) now;
         boolean ownerMatches = owner == null || fieldInsnNode.owner.equals(owner);
         boolean nameMatches = name == null || fieldInsnNode.name.equals(name);
         boolean descMatches = desc == null || (basic ? TransformerHelper.basicType(fieldInsnNode.desc) : fieldInsnNode.desc).equals(desc);
-        if (!ownerMatches || !nameMatches || !descMatches) {
+        if (!ownerMatches || !nameMatches || !descMatches)
             return null;
-        }
+
         return now.getNext();
     }
 }

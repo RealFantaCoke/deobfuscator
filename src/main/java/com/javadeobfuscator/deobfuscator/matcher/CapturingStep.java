@@ -17,10 +17,9 @@
 package com.javadeobfuscator.deobfuscator.matcher;
 
 import com.javadeobfuscator.deobfuscator.utils.Utils;
-import org.objectweb.asm.tree.AbstractInsnNode;
-
 import java.util.ArrayList;
 import java.util.List;
+import org.objectweb.asm.tree.AbstractInsnNode;
 
 public class CapturingStep implements Step {
     private final Step capture;
@@ -35,14 +34,14 @@ public class CapturingStep implements Step {
     public AbstractInsnNode tryMatch(InstructionMatcher matcher, AbstractInsnNode now) {
         AbstractInsnNode start = now;
         final AbstractInsnNode end = capture.tryMatch(matcher, now);
-        if (end == null) {
+        if (end == null)
             return null;
-        }
+
         List<AbstractInsnNode> captured = new ArrayList<>();
-        for (; start != end; start = start.getNext()) {
+        for (; start != end; start = start.getNext())
             if (Utils.isInstruction(start))
                 captured.add(start);
-        }
+
         matcher.capture(id, captured);
         return end;
     }

@@ -20,11 +20,7 @@ import com.javadeobfuscator.deobfuscator.executor.Context;
 import com.javadeobfuscator.deobfuscator.executor.exceptions.ExecutionException;
 import com.javadeobfuscator.deobfuscator.executor.providers.Provider;
 import com.javadeobfuscator.deobfuscator.executor.values.JavaValue;
-import org.objectweb.asm.Type;
 import com.javadeobfuscator.deobfuscator.utils.Utils;
-import org.objectweb.asm.tree.ClassNode;
-import sun.invoke.util.BytecodeDescriptor;
-
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -32,6 +28,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.objectweb.asm.Type;
+import org.objectweb.asm.tree.ClassNode;
+import sun.invoke.util.BytecodeDescriptor;
 
 /*
  * Not recommended for production usage
@@ -48,9 +47,9 @@ public class ReflectiveProvider implements Provider {
 
     @Override
     public Object invokeMethod(String className, String methodName, String methodDesc, JavaValue targetObject, List<JavaValue> args, Context context) {
-        if (!dictionary.containsKey(className)) {
+        if (!dictionary.containsKey(className))
             throw new ExecutionException(className + " could not be located in dictionary");
-        }
+
         Class<?> targetClass;
         Class<?>[] clazzes;
         try {
@@ -73,9 +72,9 @@ public class ReflectiveProvider implements Provider {
             });
 
             List<Object> ar = new ArrayList<>();
-            for (JavaValue o : args) {
+            for (JavaValue o : args)
                 ar.add(o.value());
-            }
+
             Object o;
             try {
                 o = ctor.newInstance(ar.toArray());
@@ -86,9 +85,9 @@ public class ReflectiveProvider implements Provider {
                 throw new ExecutionException(t);
             }
             targetObject.initialize(o);
-            if (targetObject.value() instanceof Throwable) {
+            if (targetObject.value() instanceof Throwable)
                 ((Throwable) targetObject.value()).setStackTrace(context.getStackTrace());
-            }
+
             return null;
         } else {
             Method method = methodCache.computeIfAbsent(className + methodName + methodDesc, key -> {
@@ -102,9 +101,9 @@ public class ReflectiveProvider implements Provider {
             });
             Object instance = targetObject == null ? null : targetObject.value();
             List<Object> ar = new ArrayList<>();
-            for (JavaValue o : args) {
+            for (JavaValue o : args)
                 ar.add(o.value());
-            }
+
             try {
                 return method.invoke(instance, ar.toArray());
             } catch (ReflectiveOperationException ex) {
@@ -138,9 +137,9 @@ public class ReflectiveProvider implements Provider {
 
     @Override
     public Object getField(String className, String fieldName, String fieldDesc, JavaValue targetObject, Context context) {
-        if (!dictionary.containsKey(className)) {
+        if (!dictionary.containsKey(className))
             throw new ExecutionException(className + " could not be located in dictionary");
-        }
+
         Class<?> targetClass;
         try {
             targetClass = Class.forName(className.replace("/", "."));
@@ -149,11 +148,10 @@ public class ReflectiveProvider implements Provider {
         }
         Field field = fieldCache.computeIfAbsent(className + fieldName + fieldDesc, key -> {
             Field[] fields = targetClass.getDeclaredFields();
-            for (Field f : fields) {
-                if (f.getName().equals(fieldName) && Type.getType(f.getType()).getDescriptor().equals(fieldDesc)) {
+            for (Field f : fields)
+                if (f.getName().equals(fieldName) && Type.getType(f.getType()).getDescriptor().equals(fieldDesc))
                     return f;
-                }
-            }
+
             throw new ExecutionException("Could not find field");
         });
         try {
@@ -174,24 +172,22 @@ public class ReflectiveProvider implements Provider {
     @Override
     public boolean canCheckInstanceOf(JavaValue target, Type type, Context context) {
         Type finalType = type;
-        while (finalType.getSort() == Type.ARRAY) {
+        while (finalType.getSort() == Type.ARRAY)
             finalType = finalType.getElementType();
-        }
-        if (finalType.getSort() != Type.OBJECT) {
+        if (finalType.getSort() != Type.OBJECT)
             throw new ExecutionException("Expected instanceof Object, but got " + finalType.getSort());
-        }
+
         return dictionary.containsKey(finalType.getInternalName());
     }
 
     @Override
     public boolean canCheckcast(JavaValue target, Type type, Context context) {
         Type finalType = type;
-        while (finalType.getSort() == Type.ARRAY) {
+        while (finalType.getSort() == Type.ARRAY)
             finalType = finalType.getElementType();
-        }
-        if (finalType.getSort() != Type.OBJECT) {
+        if (finalType.getSort() != Type.OBJECT)
             throw new ExecutionException("Expected instanceof Object, but got " + finalType.getSort());
-        }
+
         return dictionary.containsKey(finalType.getInternalName());
     }
 

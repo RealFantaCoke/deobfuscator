@@ -3,9 +3,8 @@ package com.javadeobfuscator.deobfuscator.transformers.zelix;
 import com.javadeobfuscator.deobfuscator.config.TransformerConfig;
 import com.javadeobfuscator.deobfuscator.transformers.Transformer;
 import com.javadeobfuscator.deobfuscator.utils.Utils;
-import org.objectweb.asm.Opcodes;
-
 import java.util.concurrent.atomic.AtomicInteger;
+import org.objectweb.asm.Opcodes;
 
 public class FlowObfuscationTransformer extends Transformer<TransformerConfig> {
     @Override

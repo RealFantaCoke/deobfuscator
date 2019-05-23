@@ -17,30 +17,28 @@
 package com.javadeobfuscator.deobfuscator.transformers.general.peephole;
 
 import com.javadeobfuscator.deobfuscator.config.TransformerConfig;
+import com.javadeobfuscator.deobfuscator.transformers.Transformer;
+import com.javadeobfuscator.deobfuscator.utils.Utils;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.LabelNode;
 import org.objectweb.asm.tree.TryCatchBlockNode;
-import com.javadeobfuscator.deobfuscator.transformers.Transformer;
-import com.javadeobfuscator.deobfuscator.utils.Utils;
-
-import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import static org.objectweb.asm.Opcodes.*;
 
 public class RedundantTrapRemover extends Transformer<TransformerConfig> {
     private boolean doesTrapCatch(TryCatchBlockNode node, String... exceptions) {
-        if (node.type == null) {
+        if (node.type == null)
             return true;
-        }
-        if (node.type.equals("java/lang/Throwable")) {
+        if (node.type.equals("java/lang/Throwable"))
             return true;
-        }
-        for (String exception : exceptions) {
-            if (getDeobfuscator().isSubclass(node.type, exception)) {
+        for (String exception : exceptions)
+            if (getDeobfuscator().isSubclass(node.type, exception))
                 return true;
-            }
-        }
         return false;
     }
 
@@ -190,9 +188,9 @@ public class RedundantTrapRemover extends Transformer<TransformerConfig> {
 //                                    }
 
                                     if (containsThrowableInstructions) {
-                                        if (firstThrowable == null) {
+                                        if (firstThrowable == null)
                                             firstThrowable = cur;
-                                        }
+
                                         latestThrowable = cur;
                                     }
 //                                    if (guaranteedThrow) {
@@ -218,9 +216,8 @@ public class RedundantTrapRemover extends Transformer<TransformerConfig> {
 //                                    previousInsnThrows = currentInsnThrows;
                                 }
 
-                                if (cur == tryCatchBlockNode.end) {
+                                if (cur == tryCatchBlockNode.end)
                                     break;
-                                }
                             }
 
                             if (!containsThrowableInstructions) {
@@ -243,20 +240,17 @@ public class RedundantTrapRemover extends Transformer<TransformerConfig> {
                     // Now remove duplicates
                     {
                         Map<Map.Entry<String, List<AbstractInsnNode>>, List<TryCatchBlockNode>> duplicates = new HashMap<>();
-                        for (TryCatchBlockNode tryCatchBlockNode : methodNode.tryCatchBlocks) {
+                        for (TryCatchBlockNode tryCatchBlockNode : methodNode.tryCatchBlocks)
                             duplicates.computeIfAbsent(
                                     new AbstractMap.SimpleEntry<>(
                                             tryCatchBlockNode.type,
                                             Arrays.asList(Utils.getNext(tryCatchBlockNode.start), Utils.getNext(tryCatchBlockNode.end), Utils.getNext(tryCatchBlockNode.handler))
                                     ), key -> new ArrayList<>()).add(tryCatchBlockNode);
-                        }
 
                         duplicates.forEach((ent, list) -> {
-                            if (list.size() > 1) {
-                                for (int i = 1; i < list.size(); i++) {
+                            if (list.size() > 1)
+                                for (int i = 1; i < list.size(); i++)
                                     methodNode.tryCatchBlocks.remove(list.get(i));
-                                }
-                            }
                         });
                     }
                 }

@@ -18,15 +18,14 @@ package com.javadeobfuscator.deobfuscator.transformers.normalizer;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.javadeobfuscator.deobfuscator.config.TransformerConfig;
-import org.objectweb.asm.commons.ClassRemapper;
-import org.objectweb.asm.tree.ClassNode;
 import com.javadeobfuscator.deobfuscator.transformers.Transformer;
-
 import java.io.File;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import org.objectweb.asm.commons.ClassRemapper;
+import org.objectweb.asm.tree.ClassNode;
 
 @TransformerConfig.ConfigOptions(configClass = AbstractNormalizer.Config.class)
 public abstract class AbstractNormalizer<T extends AbstractNormalizer.Config> extends Transformer<T> {

@@ -17,7 +17,6 @@
 package com.javadeobfuscator.deobfuscator.graph.inheritancegraph;
 
 import com.google.common.collect.ImmutableSet;
-
 import java.util.ArrayDeque;
 import java.util.HashSet;
 import java.util.Objects;
@@ -46,9 +45,8 @@ public final class InheritanceGraphNode {
     }
 
     void computeIndirectRelationships() {
-        ArrayDeque<InheritanceGraphNode> toVisit = new ArrayDeque<>();
+        ArrayDeque<InheritanceGraphNode> toVisit = new ArrayDeque<>(directChildren);
 
-        toVisit.addAll(directChildren);
         while (!toVisit.isEmpty()) {
             InheritanceGraphNode child = toVisit.pop();
             children.add(child);

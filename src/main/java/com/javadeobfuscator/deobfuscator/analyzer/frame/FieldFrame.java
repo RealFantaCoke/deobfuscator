@@ -17,7 +17,6 @@
 package com.javadeobfuscator.deobfuscator.analyzer.frame;
 
 public class FieldFrame extends Frame {
-
     private Frame instance;
     private Frame obj;
     private String owner;
@@ -32,14 +31,12 @@ public class FieldFrame extends Frame {
         this.name = name;
         this.desc = desc;
 
-        if (this.instance != null) {
+        if (this.instance != null)
             this.instance.children.add(this);
-        }
-        if (this.obj != null) {
+        if (this.obj != null)
             this.obj.children.add(this);
-        }
     }
-    
+
     public String getDesc() {
         return desc;
     }

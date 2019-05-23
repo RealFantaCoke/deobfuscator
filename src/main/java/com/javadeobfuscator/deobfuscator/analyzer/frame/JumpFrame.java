@@ -16,25 +16,22 @@
 
 package com.javadeobfuscator.deobfuscator.analyzer.frame;
 
-import org.objectweb.asm.tree.AbstractInsnNode;
-import org.objectweb.asm.tree.LabelNode;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import org.objectweb.asm.tree.AbstractInsnNode;
 
 public class JumpFrame extends Frame {
     private List<Frame> comparators = new ArrayList<>();
-    private transient List<AbstractInsnNode> targets; 
+    private transient List<AbstractInsnNode> targets;
 
     public JumpFrame(int opcode, List<Frame> comparators, AbstractInsnNode... targets) {
         super(opcode);
         this.comparators.addAll(comparators);
         this.targets = Arrays.asList(targets);
 
-        for (Frame comparator : this.comparators) {
+        for (Frame comparator : this.comparators)
             comparator.children.add(this);
-        }
     }
 
     public List<Frame> getComparators() {

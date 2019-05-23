@@ -16,15 +16,17 @@
 
 package com.javadeobfuscator.deobfuscator.asm.source;
 
-import com.javadeobfuscator.deobfuscator.utils.*;
-import org.objectweb.asm.*;
-import org.objectweb.asm.tree.*;
-import org.objectweb.asm.tree.analysis.*;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.IntInsnNode;
+import org.objectweb.asm.tree.LdcInsnNode;
+import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.analysis.Frame;
+import org.objectweb.asm.tree.analysis.SourceValue;
 
 public class SourceFinder implements Opcodes {
-
     public static SourceResult findSource(MethodNode methodNode, Frame<SourceValue>[] frames, SourceFinderConsumer sfc, AbstractInsnNode now, SourceValue want) {
         // Remember, Frame stores the stack/locals *before* the instruction is executed
 
@@ -75,13 +77,13 @@ public class SourceFinder implements Opcodes {
                     break;
                 }
                 default: {
-                    if (sfc == null) {
+                    if (sfc == null)
                         return SourceResult.unknown();
-                    }
+
                     SourceResult found = sfc.findSource(methodNode, frames, now, want, sourceInsn);
-                    if (found.isUnknown()) {
+                    if (found.isUnknown())
                         return SourceResult.unknown();
-                    }
+
                     foundResults.addAll(found.getValues());
                     foundExceptions.addAll(found.getExceptions());
                     break;

@@ -33,10 +33,6 @@ import com.javadeobfuscator.deobfuscator.executor.values.JavaValue;
 import com.javadeobfuscator.deobfuscator.transformers.Transformer;
 import com.javadeobfuscator.deobfuscator.utils.PrimitiveUtils;
 import com.javadeobfuscator.deobfuscator.utils.Utils;
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Type;
-import org.objectweb.asm.tree.*;
-
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -44,6 +40,13 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
+import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.FieldNode;
+import org.objectweb.asm.tree.MethodInsnNode;
+import org.objectweb.asm.tree.MethodNode;
 
 public class ReflectionObfuscationTransformer extends Transformer<TransformerConfig> {
     private Set<ClassNode> remove = new HashSet<>();
@@ -74,11 +77,9 @@ public class ReflectionObfuscationTransformer extends Transformer<TransformerCon
                         ClassNode target = classpath.get(methodInsnNode.owner);
                         if (target != null) {
                             MethodNode method = target.methods.stream().filter(mn -> mn.name.equals(methodInsnNode.name) && mn.desc.equals(methodInsnNode.desc)).findFirst().orElse(null);
-                            if (method != null) {
-                                if (isValidTarget(target, method)) {
+                            if (method != null)
+                                if (isValidTarget(target, method))
                                     total.incrementAndGet();
-                                }
-                            }
                         }
                     }
                 }
@@ -179,11 +180,11 @@ public class ReflectionObfuscationTransformer extends Transformer<TransformerCon
                                     List<JavaValue> args = new ArrayList<>();
                                     for (Type t : Type.getArgumentTypes(method.desc)) {
                                         Class<?> prim = PrimitiveUtils.getPrimitiveByName(t.getClassName());
-                                        if (prim != null) {
+                                        if (prim != null)
                                             args.add(JavaValue.forPrimitive(prim));
-                                        } else {
+                                        else
                                             args.add(new JavaObject(null, "java/lang/Object"));
-                                        }
+
                                     }
                                     Context context = new Context(provider);
                                     context.dictionary = this.classpath;
@@ -204,8 +205,8 @@ public class ReflectionObfuscationTransformer extends Transformer<TransformerCon
                                         ClassNode cn = result.getDeclaringClass().getClassNode();
                                         MethodNode mn = cn.methods.stream().filter(m -> m.name.equals(result.getName()) && m.desc.startsWith(partDesc)).findFirst().orElse(null);
                                         methodInsnNode.desc = mn.desc;
-                                        methodInsnNode.setOpcode(Modifier.isStatic(mn.access) ? Opcodes.INVOKESTATIC : 
-                                        	(cn.access & Opcodes.ACC_INTERFACE) != 0 ? Opcodes.INVOKEINTERFACE : Opcodes.INVOKEVIRTUAL);
+                                        methodInsnNode.setOpcode(Modifier.isStatic(mn.access) ? Opcodes.INVOKESTATIC :
+                                                (cn.access & Opcodes.ACC_INTERFACE) != 0 ? Opcodes.INVOKEINTERFACE : Opcodes.INVOKEVIRTUAL);
                                         methodInsnNode.itf = methodInsnNode.getOpcode() == Opcodes.INVOKEINTERFACE;
                                         total.incrementAndGet();
                                         int x = (int) ((total.get() * 1.0d / expected) * 100);

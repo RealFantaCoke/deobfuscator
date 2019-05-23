@@ -16,16 +16,9 @@
 
 package com.javadeobfuscator.deobfuscator.transformers.stringer;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import com.javadeobfuscator.deobfuscator.config.TransformerConfig;
-import com.javadeobfuscator.deobfuscator.executor.MethodExecutor;
 import com.javadeobfuscator.deobfuscator.executor.Context;
-
+import com.javadeobfuscator.deobfuscator.executor.MethodExecutor;
 import com.javadeobfuscator.deobfuscator.executor.defined.DisabledFieldProvider;
 import com.javadeobfuscator.deobfuscator.executor.defined.JVMMethodProvider;
 import com.javadeobfuscator.deobfuscator.executor.defined.types.JavaMethodHandle;
@@ -34,6 +27,12 @@ import com.javadeobfuscator.deobfuscator.executor.providers.ComparisonProvider;
 import com.javadeobfuscator.deobfuscator.executor.providers.DelegatingProvider;
 import com.javadeobfuscator.deobfuscator.executor.values.JavaObject;
 import com.javadeobfuscator.deobfuscator.executor.values.JavaValue;
+import com.javadeobfuscator.deobfuscator.transformers.Transformer;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -42,7 +41,6 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.InvokeDynamicInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
-import com.javadeobfuscator.deobfuscator.transformers.Transformer;
 
 public class InvokedynamicTransformer extends Transformer<TransformerConfig> {
     @Override
@@ -73,9 +71,8 @@ public class InvokedynamicTransformer extends Transformer<TransformerConfig> {
                     AbstractInsnNode abstractInsnNode = methodNode.instructions.get(i);
                     if (abstractInsnNode instanceof InvokeDynamicInsnNode) {
                         InvokeDynamicInsnNode dyn = (InvokeDynamicInsnNode) abstractInsnNode;
-                        if (dyn.bsmArgs.length > 0 && dyn.bsmArgs[0] instanceof String) {
+                        if (dyn.bsmArgs.length > 0 && dyn.bsmArgs[0] instanceof String)
                             total.incrementAndGet();
-                        }
                     }
                 }
             });
@@ -98,11 +95,10 @@ public class InvokedynamicTransformer extends Transformer<TransformerConfig> {
 
             @Override
             public boolean checkcast(JavaValue target, Type type, Context context) {
-                if (type.getDescriptor().equals("[C")) {
-                    if (!(target.value() instanceof char[])) {
+                if (type.getDescriptor().equals("[C"))
+                    if (!(target.value() instanceof char[]))
                         return false;
-                    }
-                }
+
                 return true;
             }
 
@@ -141,9 +137,9 @@ public class InvokedynamicTransformer extends Transformer<TransformerConfig> {
                             args.add(new JavaObject(null, "java/lang/invoke/MethodHandles$Lookup")); //Lookup
                             args.add(JavaValue.valueOf(dyn.name)); //dyn method name
                             args.add(new JavaObject(null, "java/lang/invoke/MethodType")); //dyn method type
-                            for (Object o : dyn.bsmArgs) {
+                            for (Object o : dyn.bsmArgs)
                                 args.add(JavaValue.valueOf(o));
-                            }
+
                             try {
                                 Context context = new Context(provider);
                                 context.dictionary = this.classpath;
@@ -153,9 +149,9 @@ public class InvokedynamicTransformer extends Transformer<TransformerConfig> {
                                 MethodInsnNode replacement = null;
                                 switch (result.type) {
                                     case "virtual":
-                                        replacement = new MethodInsnNode((classpath.get(clazz).access & Opcodes.ACC_INTERFACE) != 0 ? 
-                                        	 Opcodes.INVOKEINTERFACE : Opcodes.INVOKEVIRTUAL, clazz, result.name, result.desc,
-                                        	 (classpath.get(clazz).access & Opcodes.ACC_INTERFACE) != 0);
+                                        replacement = new MethodInsnNode((classpath.get(clazz).access & Opcodes.ACC_INTERFACE) != 0 ?
+                                                Opcodes.INVOKEINTERFACE : Opcodes.INVOKEVIRTUAL, clazz, result.name, result.desc,
+                                                (classpath.get(clazz).access & Opcodes.ACC_INTERFACE) != 0);
                                         break;
                                     case "static":
                                         replacement = new MethodInsnNode(Opcodes.INVOKESTATIC, clazz, result.name, result.desc, false);
@@ -170,9 +166,9 @@ public class InvokedynamicTransformer extends Transformer<TransformerConfig> {
                                     alerted[x - 1] = true;
                                 }
                             } catch (ExecutionException ex) {
-                                if (ex.getCause() != null) {
+                                if (ex.getCause() != null)
                                     ex.getCause().printStackTrace(System.out);
-                                }
+
                                 throw ex;
                             } catch (Throwable t) {
                                 System.out.println(classNode.name);

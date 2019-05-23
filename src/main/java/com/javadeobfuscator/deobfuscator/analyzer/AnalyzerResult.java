@@ -17,12 +17,11 @@
 package com.javadeobfuscator.deobfuscator.analyzer;
 
 import com.javadeobfuscator.deobfuscator.analyzer.frame.Frame;
-import org.objectweb.asm.tree.AbstractInsnNode;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.objectweb.asm.tree.AbstractInsnNode;
 
 public class AnalyzerResult {
     public static final AnalyzerResult EMPTY_RESULT;

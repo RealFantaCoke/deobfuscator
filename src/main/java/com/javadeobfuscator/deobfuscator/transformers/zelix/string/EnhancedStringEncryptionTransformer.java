@@ -16,24 +16,37 @@
 
 package com.javadeobfuscator.deobfuscator.transformers.zelix.string;
 
-import com.fasterxml.jackson.annotation.*;
-import com.google.common.base.*;
-import com.javadeobfuscator.deobfuscator.config.*;
-import com.javadeobfuscator.deobfuscator.exceptions.*;
-import com.javadeobfuscator.deobfuscator.matcher.*;
-import com.javadeobfuscator.deobfuscator.transformers.*;
-import com.javadeobfuscator.deobfuscator.utils.*;
-import com.javadeobfuscator.javavm.*;
-import com.javadeobfuscator.javavm.exceptions.*;
-import com.javadeobfuscator.javavm.mirrors.*;
-import com.javadeobfuscator.javavm.values.*;
-import org.objectweb.asm.*;
-import org.objectweb.asm.tree.*;
-import org.objectweb.asm.tree.analysis.*;
-import org.objectweb.asm.tree.analysis.Frame;
-
-import java.util.*;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Suppliers;
+import com.javadeobfuscator.deobfuscator.config.TransformerConfig;
+import com.javadeobfuscator.deobfuscator.exceptions.WrongTransformerException;
+import com.javadeobfuscator.deobfuscator.matcher.CapturingStep;
+import com.javadeobfuscator.deobfuscator.matcher.InstructionMatcher;
+import com.javadeobfuscator.deobfuscator.matcher.InstructionPattern;
+import com.javadeobfuscator.deobfuscator.matcher.InvocationStep;
+import com.javadeobfuscator.deobfuscator.matcher.LoadIntStep;
+import com.javadeobfuscator.deobfuscator.transformers.Transformer;
+import com.javadeobfuscator.deobfuscator.utils.InstructionModifier;
+import com.javadeobfuscator.deobfuscator.utils.TransformerHelper;
+import com.javadeobfuscator.javavm.VirtualMachine;
+import com.javadeobfuscator.javavm.exceptions.VMException;
+import com.javadeobfuscator.javavm.mirrors.JavaClass;
+import com.javadeobfuscator.javavm.values.JavaWrapper;
+import java.util.ArrayList;
 import java.util.function.Supplier;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.InsnList;
+import org.objectweb.asm.tree.InsnNode;
+import org.objectweb.asm.tree.LdcInsnNode;
+import org.objectweb.asm.tree.MethodInsnNode;
+import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.analysis.Analyzer;
+import org.objectweb.asm.tree.analysis.AnalyzerException;
+import org.objectweb.asm.tree.analysis.Frame;
+import org.objectweb.asm.tree.analysis.SourceInterpreter;
+import org.objectweb.asm.tree.analysis.SourceValue;
 
 /**
  * This is a transformer for the enhanced version of Zelix string encryption
@@ -86,9 +99,9 @@ public class EnhancedStringEncryptionTransformer extends Transformer<EnhancedStr
 
                         decryptNode = new MethodNode(ASM6, ACC_PUBLIC | ACC_STATIC, "Decryptor", "()Ljava/lang/String;", null, null);
                         InsnList decryptInsns = new InsnList();
-                        for (AbstractInsnNode matched : matcher.getCapturedInstructions("all")) {
+                        for (AbstractInsnNode matched : matcher.getCapturedInstructions("all"))
                             decryptInsns.add(matched.clone(null));
-                        }
+
                         decryptInsns.add(new InsnNode(ARETURN));
                         decryptNode.instructions = decryptInsns;
                         invocation = matcher.getCapturedInstruction("invoke");

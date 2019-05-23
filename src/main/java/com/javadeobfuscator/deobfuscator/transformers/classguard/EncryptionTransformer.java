@@ -16,22 +16,27 @@
 
 package com.javadeobfuscator.deobfuscator.transformers.classguard;
 
-import com.javadeobfuscator.deobfuscator.config.*;
-import com.javadeobfuscator.deobfuscator.exceptions.*;
-import com.javadeobfuscator.deobfuscator.transformers.*;
-
-import javax.crypto.*;
-import javax.crypto.spec.*;
-import java.math.*;
-import java.security.*;
-import java.security.spec.*;
-import java.util.*;
+import com.javadeobfuscator.deobfuscator.config.TransformerConfig;
+import com.javadeobfuscator.deobfuscator.exceptions.WrongTransformerException;
+import com.javadeobfuscator.deobfuscator.transformers.Transformer;
+import java.math.BigInteger;
+import java.security.GeneralSecurityException;
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.RSAPrivateKeySpec;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.spec.SecretKeySpec;
 
 /**
  * Class encryption doesn't work, folks
  */
 public class EncryptionTransformer extends Transformer<TransformerConfig> {
-
     @Override
     public boolean transform() throws WrongTransformerException {
         boolean madeChanges = false;
@@ -57,9 +62,8 @@ public class EncryptionTransformer extends Transformer<TransformerConfig> {
 
         for (ClassGuardData data : ClassGuardData.values()) {
             byte[] lib = getDeobfuscator().getInputPassthrough().get(data.getTargetFile());
-            if (lib == null) {
+            if (lib == null)
                 continue;
-            }
 
             try {
                 rsaCipher.init(Cipher.DECRYPT_MODE, rsaFactory.generatePrivate(new RSAPrivateKeySpec(
@@ -103,9 +107,9 @@ public class EncryptionTransformer extends Transformer<TransformerConfig> {
 
         for (Map.Entry<String, byte[]> entry : decrypted.entrySet()) {
             String modifiedName = entry.getKey();
-            if (modifiedName.endsWith("x")) {
+            if (modifiedName.endsWith("x"))
                 modifiedName = modifiedName.substring(0, modifiedName.length() - 1);
-            }
+
             logger.info("Decrypted {} {} -> {}", decryptingClasses ? "class" : "rsrc", entry.getKey(), modifiedName);
             getDeobfuscator().getInputPassthrough().remove(entry.getKey());
             getDeobfuscator().loadInput(modifiedName, entry.getValue());

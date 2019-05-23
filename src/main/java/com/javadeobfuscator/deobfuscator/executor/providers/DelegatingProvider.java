@@ -16,12 +16,11 @@
 
 package com.javadeobfuscator.deobfuscator.executor.providers;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.javadeobfuscator.deobfuscator.executor.Context;
 import com.javadeobfuscator.deobfuscator.executor.exceptions.ExecutionException;
 import com.javadeobfuscator.deobfuscator.executor.values.JavaValue;
+import java.util.ArrayList;
+import java.util.List;
 import org.objectweb.asm.Type;
 
 public class DelegatingProvider implements Provider {
@@ -30,11 +29,10 @@ public class DelegatingProvider implements Provider {
 
     @Override
     public Object invokeMethod(String className, String methodName, String methodDesc, JavaValue targetObject, List<JavaValue> args, Context context) {
-        for (Provider provider : providers) {
-            if (provider.canInvokeMethod(className, methodName, methodDesc, targetObject, args, context)) {
+        for (Provider provider : providers)
+            if (provider.canInvokeMethod(className, methodName, methodDesc, targetObject, args, context))
                 return provider.invokeMethod(className, methodName, methodDesc, targetObject, args, context);
-            }
-        }
+
         throw new ExecutionException("invokeMethod failed");
     }
 
@@ -55,67 +53,63 @@ public class DelegatingProvider implements Provider {
 
     @Override
     public void setField(String className, String fieldName, String fieldDesc, JavaValue targetObject, Object value, Context context) {
-        for (Provider provider : providers) {
+        for (Provider provider : providers)
             if (provider.canSetField(className, fieldName, fieldDesc, targetObject, value, context)) {
                 provider.setField(className, fieldName, fieldDesc, targetObject, value, context);
                 return;
             }
-        }
+
         throw new ExecutionException("setField failed");
     }
 
     @Override
     public Object getField(String className, String fieldName, String fieldDesc, JavaValue targetObject, Context context) {
-        for (Provider provider : providers) {
-            if (provider.canGetField(className, fieldName, fieldDesc, targetObject, context)) {
+        for (Provider provider : providers)
+            if (provider.canGetField(className, fieldName, fieldDesc, targetObject, context))
                 return provider.getField(className, fieldName, fieldDesc, targetObject, context);
-            }
-        }
+
         throw new ExecutionException("getField failed");
     }
 
     @Override
     public boolean canInvokeMethod(String className, String methodName, String methodDesc, JavaValue targetObject, List<JavaValue> args, Context context) {
-        for (Provider provider : providers) {
-            if (provider.canInvokeMethod(className, methodName, methodDesc, targetObject, args, context)) {
+        for (Provider provider : providers)
+            if (provider.canInvokeMethod(className, methodName, methodDesc, targetObject, args, context))
                 return true;
-            }
-        }
+
         return false;
     }
 
     @Override
     public boolean canCheckInstanceOf(JavaValue target, Type type, Context context) {
-        return providers.stream().filter(provider -> provider.canCheckInstanceOf(target, type, context)).findFirst().isPresent();
+        return providers.stream().anyMatch(provider -> provider.canCheckInstanceOf(target, type, context));
     }
 
     @Override
     public boolean canCheckcast(JavaValue target, Type type, Context context) {
-        return providers.stream().filter(provider -> provider.canCheckcast(target, type, context)).findFirst().isPresent();
+        return providers.stream().anyMatch(provider -> provider.canCheckcast(target, type, context));
     }
 
     @Override
     public boolean canCheckEquality(JavaValue first, JavaValue second, Context context) {
-        return providers.stream().filter(provider -> provider.canCheckEquality(first, second, context)).findFirst().isPresent();
+        return providers.stream().anyMatch(provider -> provider.canCheckEquality(first, second, context));
     }
 
     @Override
     public boolean canSetField(String className, String fieldName, String fieldDesc, JavaValue targetObject, Object value, Context context) {
-        for (Provider provider : providers) {
-            if (provider.canSetField(className, fieldName, fieldDesc, targetObject, value, context)) {
+        for (Provider provider : providers)
+            if (provider.canSetField(className, fieldName, fieldDesc, targetObject, value, context))
                 return true;
-            }
-        }
+
         return false;
     }
 
     @Override
     public boolean canGetField(String className, String fieldName, String fieldDesc, JavaValue targetObject, Context context) {
-        for (Provider provider : providers) {
-            if (provider.canGetField(className, fieldName, fieldDesc, targetObject, context)) {
+        for (Provider provider : providers)
+            if (provider.canGetField(className, fieldName, fieldDesc, targetObject, context))
                 return true;
-            }
-        }
+
         return false;
     }
 

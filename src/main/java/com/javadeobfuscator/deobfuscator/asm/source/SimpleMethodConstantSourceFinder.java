@@ -16,8 +16,10 @@
 
 package com.javadeobfuscator.deobfuscator.asm.source;
 
-import org.objectweb.asm.tree.*;
-import org.objectweb.asm.tree.analysis.*;
+import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.analysis.Frame;
+import org.objectweb.asm.tree.analysis.SourceValue;
 
 public class SimpleMethodConstantSourceFinder extends SourceFinderConsumer {
     public SimpleMethodConstantSourceFinder(SourceFinderConsumer parent) {
@@ -30,8 +32,6 @@ public class SimpleMethodConstantSourceFinder extends SourceFinderConsumer {
 
     @Override
     public SourceResult findSource(MethodNode methodNode, Frame<SourceValue>[] frames, AbstractInsnNode source, SourceValue want, AbstractInsnNode now) {
-
-
         return parent == null ? SourceResult.unknown() : parent.findSource(methodNode, frames, source, want, now);
     }
 }

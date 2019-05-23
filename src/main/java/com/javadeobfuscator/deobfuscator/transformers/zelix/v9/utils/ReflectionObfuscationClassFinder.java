@@ -18,13 +18,12 @@ package com.javadeobfuscator.deobfuscator.transformers.zelix.v9.utils;
 
 import com.javadeobfuscator.deobfuscator.transformers.ClassFinder;
 import com.javadeobfuscator.deobfuscator.utils.TransformerHelper;
-import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.FieldNode;
-
 import java.lang.reflect.Modifier;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.FieldNode;
 
 public class ReflectionObfuscationClassFinder implements ClassFinder {
     @Override
@@ -32,23 +31,21 @@ public class ReflectionObfuscationClassFinder implements ClassFinder {
         Set<ClassNode> result = new HashSet<>();
 
         for (ClassNode classNode : classes) {
-            if (classNode.fields.size() != 2) {
+            if (classNode.fields.size() != 2)
                 continue;
-            }
+
             FieldNode objArrField = TransformerHelper.findFieldNode(classNode, null, "[Ljava/lang/Object;");
-            if (objArrField == null) {
+            if (objArrField == null)
                 continue;
-            }
-            if (!Modifier.isStatic(objArrField.access) || !Modifier.isFinal(objArrField.access)) {
+            if (!Modifier.isStatic(objArrField.access) || !Modifier.isFinal(objArrField.access))
                 continue;
-            }
+
             FieldNode strArrField = TransformerHelper.findFieldNode(classNode, null, "[Ljava/lang/String;");
-            if (strArrField == null) {
+            if (strArrField == null)
                 continue;
-            }
-            if (!Modifier.isStatic(strArrField.access) || !Modifier.isFinal(strArrField.access)) {
+            if (!Modifier.isStatic(strArrField.access) || !Modifier.isFinal(strArrField.access))
                 continue;
-            }
+
 
             result.add(classNode);
         }

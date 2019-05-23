@@ -17,16 +17,14 @@
 package com.javadeobfuscator.deobfuscator.transformers;
 
 import com.javadeobfuscator.deobfuscator.config.TransformerConfig;
-
 import java.util.List;
 
 @TransformerConfig.ConfigOptions(configClass = DelegatingTransformer.Config.class)
 public class DelegatingTransformer extends Transformer<DelegatingTransformer.Config> {
     @Override
     public boolean transform() throws Throwable {
-        for (TransformerConfig childConfig : getConfig().getConfigs()) {
+        for (TransformerConfig childConfig : getConfig().getConfigs())
             getDeobfuscator().runFromConfig(childConfig);
-        }
 
         return true;
     }

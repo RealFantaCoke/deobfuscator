@@ -17,43 +17,39 @@
 package com.javadeobfuscator.deobfuscator.transformers.normalizer;
 
 import com.javadeobfuscator.deobfuscator.config.TransformerConfig;
-
 import java.util.concurrent.atomic.AtomicInteger;
 
 // todo maybe make a "recover identifiers from source" transformer? the InnerClasses attribute has more useful info
 @TransformerConfig.ConfigOptions(configClass = SourceFileClassNormalizer.Config.class)
 public class SourceFileClassNormalizer extends AbstractNormalizer<SourceFileClassNormalizer.Config> {
-
     @Override
     public void remap(CustomRemapper remapper) {
         AtomicInteger counter = new AtomicInteger();
 
         classNodes().forEach(classNode -> {
-            if (classNode.sourceFile == null) {
+            if (classNode.sourceFile == null)
                 return;
-            }
 
             // todo handle inner classes gracefully (can we give them numerical ids? don't forget about nested inner classes)
             String packageName = classNode.name.contains("/") ? classNode.name.substring(0, classNode.name.lastIndexOf('/')) : "";
 
             String sourceFileName = classNode.sourceFile;
-            if (classNode.sourceFile.endsWith(".java")) {
+            if (classNode.sourceFile.endsWith(".java"))
                 sourceFileName = sourceFileName.substring(0, sourceFileName.lastIndexOf("."));
-            }
 
             String innerClasses = "";
-            if (classNode.name.contains("$")) {
+            if (classNode.name.contains("$"))
                 // note that there may be nested inner classes (com/package/Outer$Inner$NestedInner)
                 innerClasses = classNode.name.substring(classNode.name.indexOf("$") + 1);
-            }
+
 
             String reconstructedName = (packageName.isEmpty() ? "" : packageName + "/") + sourceFileName + (innerClasses.isEmpty() ? "" : "$" + innerClasses);
 
             int id = 0;
             String mappedName = reconstructedName;
-            while (!remapper.map(classNode.name, mappedName)) {
+            while (!remapper.map(classNode.name, mappedName))
                 mappedName = reconstructedName + ++id;
-            }
+
 
             counter.incrementAndGet();
         });

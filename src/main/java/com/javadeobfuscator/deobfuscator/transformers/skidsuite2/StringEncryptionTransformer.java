@@ -18,7 +18,12 @@ package com.javadeobfuscator.deobfuscator.transformers.skidsuite2;
 
 import com.javadeobfuscator.deobfuscator.analyzer.AnalyzerResult;
 import com.javadeobfuscator.deobfuscator.analyzer.MethodAnalyzer;
-import com.javadeobfuscator.deobfuscator.analyzer.frame.*;
+import com.javadeobfuscator.deobfuscator.analyzer.frame.ArrayStoreFrame;
+import com.javadeobfuscator.deobfuscator.analyzer.frame.DupFrame;
+import com.javadeobfuscator.deobfuscator.analyzer.frame.Frame;
+import com.javadeobfuscator.deobfuscator.analyzer.frame.LdcFrame;
+import com.javadeobfuscator.deobfuscator.analyzer.frame.MethodFrame;
+import com.javadeobfuscator.deobfuscator.analyzer.frame.NewArrayFrame;
 import com.javadeobfuscator.deobfuscator.config.TransformerConfig;
 import com.javadeobfuscator.deobfuscator.executor.Context;
 import com.javadeobfuscator.deobfuscator.executor.MethodExecutor;
@@ -29,20 +34,22 @@ import com.javadeobfuscator.deobfuscator.executor.values.JavaInteger;
 import com.javadeobfuscator.deobfuscator.executor.values.JavaObject;
 import com.javadeobfuscator.deobfuscator.executor.values.JavaValue;
 import com.javadeobfuscator.deobfuscator.transformers.Transformer;
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.tree.*;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.LdcInsnNode;
+import org.objectweb.asm.tree.MethodInsnNode;
+import org.objectweb.asm.tree.MethodNode;
 
 // I can't believe this has to exist
 public class StringEncryptionTransformer extends Transformer<TransformerConfig> {
     @Override
     public boolean transform() throws Throwable {
-
         AtomicInteger counter = new AtomicInteger();
 
         DelegatingProvider provider = new DelegatingProvider();
@@ -50,7 +57,7 @@ public class StringEncryptionTransformer extends Transformer<TransformerConfig> 
         provider.register(new JVMComparisonProvider());
 
         classNodes().forEach(classNode -> {
-        	Set<MethodNode> stringDecrypt = new HashSet<>();
+            Set<MethodNode> stringDecrypt = new HashSet<>();
             classNode.methods.forEach(methodNode -> {
                 AnalyzerResult result = MethodAnalyzer.analyze(classNode, methodNode);
 
@@ -77,40 +84,37 @@ public class StringEncryptionTransformer extends Transformer<TransformerConfig> 
                     for (Frame arg : frame.getArgs()) {
                         if (arg instanceof LdcFrame) {
                             Object cst = ((LdcFrame) arg).getConstant();
-                            if (cst == null) {
+                            if (cst == null)
                                 continue insns;
-                            }
+
                             localRemove.add(result.getMapping().get(arg));
-                            if (cst instanceof String) {
+                            if (cst instanceof String)
                                 args.add(new JavaObject(cst, "java/lang/String"));
-                            } else {
+                            else
                                 args.add(new JavaInteger(((Number) cst).intValue()));
-                            }
                         } else if (arg instanceof NewArrayFrame) {
                             NewArrayFrame newArrayFrame = (NewArrayFrame) arg;
                             localRemove.add(result.getMapping().get(newArrayFrame));
                             if (newArrayFrame.getLength() instanceof LdcFrame) {
-                            	localRemove.add(result.getMapping().get(newArrayFrame.getLength()));
+                                localRemove.add(result.getMapping().get(newArrayFrame.getLength()));
                                 char[] arr = new char[((Number) ((LdcFrame) newArrayFrame.getLength()).getConstant()).intValue()];
                                 JavaObject obj = new JavaObject(arr, "java/lang/Object");
                                 for (Frame child0 : arg.getChildren()) {
                                     if (child0 instanceof ArrayStoreFrame) {
                                         ArrayStoreFrame arrayStoreFrame = (ArrayStoreFrame) child0;
                                         if (arrayStoreFrame.getIndex() instanceof LdcFrame && arrayStoreFrame.getObject() instanceof LdcFrame) {
-                                        	localRemove.add(result.getMapping().get(arrayStoreFrame.getIndex()));
-                                        	localRemove.add(result.getMapping().get(arrayStoreFrame.getObject()));
-                                        	localRemove.add(result.getMapping().get(arrayStoreFrame));
+                                            localRemove.add(result.getMapping().get(arrayStoreFrame.getIndex()));
+                                            localRemove.add(result.getMapping().get(arrayStoreFrame.getObject()));
+                                            localRemove.add(result.getMapping().get(arrayStoreFrame));
                                             arr[((Number) ((LdcFrame) arrayStoreFrame.getIndex()).getConstant()).intValue()] = (char) ((Number) ((LdcFrame) arrayStoreFrame.getObject()).getConstant()).intValue();
-                                        } else {
+                                        } else
                                             continue insns;
-                                        }
-                                    }else if(child0 instanceof DupFrame)
-                                		localRemove.add(result.getMapping().get(child0));
+                                    } else if (child0 instanceof DupFrame)
+                                        localRemove.add(result.getMapping().get(child0));
                                 }
                                 args.add(obj);
-                            } else {
+                            } else
                                 continue insns;
-                            }
                         }
                     }
 
@@ -138,7 +142,7 @@ public class StringEncryptionTransformer extends Transformer<TransformerConfig> 
                 });
             });
             stringDecrypt.forEach(m -> {
-            	classNode.methods.remove(m);
+                classNode.methods.remove(m);
             });
         });
 

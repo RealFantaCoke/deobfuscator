@@ -16,21 +16,29 @@
 
 package com.javadeobfuscator.deobfuscator.transformers.stringer.invokedynamic;
 
-import com.javadeobfuscator.deobfuscator.config.*;
-import com.javadeobfuscator.deobfuscator.exceptions.*;
-import com.javadeobfuscator.deobfuscator.transformers.*;
-import com.javadeobfuscator.deobfuscator.utils.*;
-import com.javadeobfuscator.javavm.*;
-import com.javadeobfuscator.javavm.exceptions.*;
-import com.javadeobfuscator.javavm.mirrors.*;
-import com.javadeobfuscator.javavm.nativeimpls.*;
-import com.javadeobfuscator.javavm.values.*;
-import org.objectweb.asm.*;
+import com.javadeobfuscator.deobfuscator.config.TransformerConfig;
+import com.javadeobfuscator.deobfuscator.exceptions.WrongTransformerException;
+import com.javadeobfuscator.deobfuscator.transformers.Transformer;
+import com.javadeobfuscator.deobfuscator.utils.InstructionModifier;
+import com.javadeobfuscator.deobfuscator.utils.TransformerHelper;
+import com.javadeobfuscator.javavm.VirtualMachine;
+import com.javadeobfuscator.javavm.exceptions.AbortException;
+import com.javadeobfuscator.javavm.exceptions.VMException;
+import com.javadeobfuscator.javavm.mirrors.JavaClass;
+import com.javadeobfuscator.javavm.nativeimpls.java_lang_Class;
+import com.javadeobfuscator.javavm.nativeimpls.java_lang_invoke_MethodType;
+import com.javadeobfuscator.javavm.values.JavaWrapper;
+import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.List;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.tree.*;
-
-import java.lang.reflect.*;
-import java.util.*;
+import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.InsnNode;
+import org.objectweb.asm.tree.InvokeDynamicInsnNode;
+import org.objectweb.asm.tree.MethodInsnNode;
+import org.objectweb.asm.tree.MethodNode;
 
 /**
  * This mode of Stringer's invokedynamic obfuscation encodes the target method within
@@ -40,8 +48,7 @@ import java.util.*;
  */
 public class Invokedynamic1Transformer extends Transformer<TransformerConfig> implements Opcodes {
     public static final String BSM_DESC = "(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/String;)Ljava/lang/Object;";
-
-    List<JavaWrapper> data = new ArrayList<>();
+    private List<JavaWrapper> data = new ArrayList<>();
 
     @Override
     public boolean transform() throws WrongTransformerException {
@@ -85,9 +92,9 @@ public class Invokedynamic1Transformer extends Transformer<TransformerConfig> im
                     classNode.methods.add(decryptorMethod);
                     try {
                         data.clear();
-                        if (classNode.name.equals("com/licel/stringer/V")) {
+                        if (classNode.name.equals("com/licel/stringer/V"))
                             TransformerHelper.dumpMethod(decryptorMethod);
-                        }
+
                         logger.info("Decrypting {} {}{} {} {}", classNode.name, methodNode.name, methodNode.desc, invokeDynamicInsnNode.bsmArgs[0], invokeDynamicInsnNode.name);
                         vm.execute(classNode, decryptorMethod);
                     } catch (AbortException ignored) {
@@ -119,9 +126,9 @@ public class Invokedynamic1Transformer extends Transformer<TransformerConfig> im
                     }
 
                     int opcode;
-                    if (Modifier.isStatic(indyMethod.access)) {
+                    if (Modifier.isStatic(indyMethod.access))
                         opcode = INVOKESTATIC;
-                    } else {
+                    else {
                         if (Modifier.isInterface(owner.getClassNode().access)) {
                             opcode = INVOKEINTERFACE;
                         } else {

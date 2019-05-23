@@ -25,9 +25,9 @@ import org.objectweb.asm.Type;
 public class JVMComparisonProvider extends ComparisonProvider {
     @Override
     public boolean checkEquality(JavaValue first, JavaValue second, Context context) {
-        if (first.value() instanceof JavaClass && second.value() instanceof JavaClass) {
+        if (first.value() instanceof JavaClass && second.value() instanceof JavaClass)
             return first.as(JavaClass.class).equals(second.value());
-        }
+
         return first == second;
     }
 

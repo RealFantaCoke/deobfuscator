@@ -16,11 +16,10 @@
 
 package com.javadeobfuscator.deobfuscator.transformers;
 
-import org.objectweb.asm.tree.ClassNode;
-
 import java.util.Collection;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.objectweb.asm.tree.ClassNode;
 
 public interface ClassFinder {
     Set<ClassNode> find(Collection<ClassNode> classes);

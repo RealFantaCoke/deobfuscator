@@ -19,12 +19,18 @@ package com.javadeobfuscator.deobfuscator.graph.callgraph;
 import com.javadeobfuscator.deobfuscator.graph.inheritancegraph.InheritanceGraph;
 import com.javadeobfuscator.deobfuscator.graph.inheritancegraph.InheritanceGraphNode;
 import com.javadeobfuscator.deobfuscator.utils.TransformerHelper;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
+import java.util.Set;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
-
-import java.util.*;
 
 import static com.javadeobfuscator.deobfuscator.graph.GraphHelper.validateUniqueClasses;
 
@@ -60,13 +66,12 @@ public class CallGraphBuilder {
         Map<CallGraph.Key, CallGraphNode> callGraph = new HashMap<>();
 
         // First, compute the call graph
-        for (ClassNode classNode : nodes) {
+        for (ClassNode classNode : nodes)
             for (MethodNode methodNode : classNode.methods) {
                 CallGraphNode thisNode = callGraph.computeIfAbsent(CallGraph.getKey(classNode, methodNode), CallGraphNode::new);
 
-                if (methodNode.instructions == null) {
+                if (methodNode.instructions == null)
                     continue;
-                }
 
                 for (ListIterator<AbstractInsnNode> it = methodNode.instructions.iterator(); it.hasNext(); ) {
                     AbstractInsnNode insn = it.next();
@@ -85,13 +90,13 @@ public class CallGraphBuilder {
                             if (inheritanceGraphNode != null) {
                                 for (InheritanceGraphNode child : inheritanceGraphNode.getChildren()) {
                                     ClassNode childNode = classMap.get(child.getOwner());
-                                    if (childNode == null) {
+                                    if (childNode == null)
                                         continue;
-                                    }
+
                                     MethodNode method = TransformerHelper.findMethodNode(childNode, methodInsnNode.name, methodInsnNode.desc);
-                                    if (method == null) {
+                                    if (method == null)
                                         continue;
-                                    }
+
                                     otherKey = CallGraph.getKey(child.getOwner(), methodInsnNode.name, methodInsnNode.desc);
                                     otherNode = callGraph.computeIfAbsent(otherKey, CallGraphNode::new);
 
@@ -101,13 +106,13 @@ public class CallGraphBuilder {
 
                                 for (InheritanceGraphNode parent : inheritanceGraphNode.getParents()) {
                                     ClassNode parentNode = classMap.get(parent.getOwner());
-                                    if (parentNode == null) {
+                                    if (parentNode == null)
                                         continue;
-                                    }
+
                                     MethodNode method = TransformerHelper.findMethodNode(parentNode, methodInsnNode.name, methodInsnNode.desc);
-                                    if (method == null) {
+                                    if (method == null)
                                         continue;
-                                    }
+
                                     otherKey = CallGraph.getKey(parent.getOwner(), methodInsnNode.name, methodInsnNode.desc);
                                     otherNode = callGraph.computeIfAbsent(otherKey, CallGraphNode::new);
 
@@ -119,7 +124,6 @@ public class CallGraphBuilder {
                     }
                 }
             }
-        }
 
         // Freeze it!
         callGraph.values().forEach(CallGraphNode::freeze);
@@ -127,13 +131,10 @@ public class CallGraphBuilder {
         // Next, compute the entry points
         Set<CallGraphNode> entryPoints = new HashSet<>();
         for (CallGraphNode node : callGraph.values()) {
-            if (!classMap.containsKey(node.getOwner())) {
+            if (!classMap.containsKey(node.getOwner()))
                 continue;
-            }
-
-            if (node.getXrefsFrom().isEmpty()) {
+            if (node.getXrefsFrom().isEmpty())
                 entryPoints.add(node);
-            }
         }
 
         return new CallGraph(callGraph, entryPoints);

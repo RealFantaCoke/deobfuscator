@@ -16,25 +16,54 @@
 
 package com.javadeobfuscator.deobfuscator.transformers.zelix.string;
 
-import com.fasterxml.jackson.annotation.*;
-import com.javadeobfuscator.deobfuscator.config.*;
-import com.javadeobfuscator.deobfuscator.exceptions.*;
-import com.javadeobfuscator.deobfuscator.matcher.*;
-import com.javadeobfuscator.deobfuscator.transformers.*;
-import com.javadeobfuscator.deobfuscator.utils.*;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.javadeobfuscator.deobfuscator.config.TransformerConfig;
+import com.javadeobfuscator.deobfuscator.exceptions.WrongTransformerException;
+import com.javadeobfuscator.deobfuscator.matcher.CapturingStep;
+import com.javadeobfuscator.deobfuscator.matcher.InstructionMatcher;
+import com.javadeobfuscator.deobfuscator.matcher.InstructionPattern;
+import com.javadeobfuscator.deobfuscator.matcher.LoadIntStep;
+import com.javadeobfuscator.deobfuscator.matcher.OpcodeStep;
+import com.javadeobfuscator.deobfuscator.matcher.WildcardStep;
+import com.javadeobfuscator.deobfuscator.transformers.Transformer;
+import com.javadeobfuscator.deobfuscator.utils.InstructionModifier;
+import com.javadeobfuscator.deobfuscator.utils.TransformerHelper;
 import com.javadeobfuscator.deobfuscator.utils.Utils;
-import com.javadeobfuscator.javavm.*;
-import com.javadeobfuscator.javavm.exceptions.*;
-import com.javadeobfuscator.javavm.mirrors.*;
-import com.javadeobfuscator.javavm.utils.*;
-import com.javadeobfuscator.javavm.values.*;
-import org.objectweb.asm.*;
-import org.objectweb.asm.tree.*;
-import org.objectweb.asm.tree.analysis.*;
+import com.javadeobfuscator.javavm.ExecutionOptions;
+import com.javadeobfuscator.javavm.VirtualMachine;
+import com.javadeobfuscator.javavm.exceptions.AbortException;
+import com.javadeobfuscator.javavm.exceptions.VMException;
+import com.javadeobfuscator.javavm.mirrors.JavaClass;
+import com.javadeobfuscator.javavm.utils.ASMHelper;
+import com.javadeobfuscator.javavm.values.JavaArray;
+import com.javadeobfuscator.javavm.values.JavaValueType;
+import com.javadeobfuscator.javavm.values.JavaWrapper;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.FieldInsnNode;
+import org.objectweb.asm.tree.FieldNode;
+import org.objectweb.asm.tree.InsnList;
+import org.objectweb.asm.tree.InsnNode;
+import org.objectweb.asm.tree.LdcInsnNode;
+import org.objectweb.asm.tree.MethodInsnNode;
+import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.TypeInsnNode;
+import org.objectweb.asm.tree.VarInsnNode;
+import org.objectweb.asm.tree.analysis.Analyzer;
+import org.objectweb.asm.tree.analysis.AnalyzerException;
 import org.objectweb.asm.tree.analysis.Frame;
-
-import java.util.*;
-import java.util.function.*;
+import org.objectweb.asm.tree.analysis.SourceInterpreter;
+import org.objectweb.asm.tree.analysis.SourceValue;
 
 /**
  * This is a transformer for the simplest version of Zelix string encryption. There are a few possible obfuscated outcomes:
@@ -74,16 +103,15 @@ public class SimpleStringEncryptionTransformer extends Transformer<SimpleStringE
         VirtualMachine vm = TransformerHelper.newVirtualMachine(this);
 
         // In this mode of string encryption, class hierarchy doesn't matter. Manually flag all classes as initialized
-        for (ClassNode classNode : classes.values()) {
+        for (ClassNode classNode : classes.values())
             JavaClass.forName(vm, classNode.name).setInitializationState(JavaClass.InitializationState.INITIALIZED, null);
-        }
 
         for (ClassNode classNode : classes.values()) {
             MethodNode clinit = TransformerHelper.findClinit(classNode);
-            if (clinit == null) {
+            if (clinit == null)
                 // No static initializer = no encrypted strings
                 continue;
-            }
+
             logger.debug("Decrypting {}", classNode.name);
 
             Frame<SourceValue>[] analysis;
@@ -135,28 +163,24 @@ public class SimpleStringEncryptionTransformer extends Transformer<SimpleStringE
                     if (source != null && source.getOpcode() == INVOKEVIRTUAL) {
                         // The only INVOKEVIRTUAL source allowed is String.intern()
                         MethodInsnNode methodInsnNode = (MethodInsnNode) source;
-                        if (!methodInsnNode.owner.equals("java/lang/String") || !methodInsnNode.name.equals("intern") || !methodInsnNode.desc.equals("()Ljava/lang/String;")) {
+                        if (!methodInsnNode.owner.equals("java/lang/String") || !methodInsnNode.name.equals("intern") || !methodInsnNode.desc.equals("()Ljava/lang/String;"))
                             source = null;
-                        }
                     }
-                    if (source == null) {
+                    if (source == null)
                         continue;
-                    }
                 }
                 allPuts.computeIfAbsent(targetField, k -> new ArrayList<>()).add(insn);
             }
             // There should only be one PUTFIELD to the decrypted string(s), since it's final
             allPuts.forEach((key, value) -> {
-                if (value.size() > 1) {
+                if (value.size() > 1)
                     oops("didn't expect more than one PUTSTATIC for {} {} {}", classNode.name, key.name, key.desc);
-                }
             });
             allPuts.entrySet().removeIf(e -> e.getValue().size() != 1);
 
-            if (allPuts.isEmpty() && clinitLocalStrings.isEmpty()) {
+            if (allPuts.isEmpty() && clinitLocalStrings.isEmpty())
                 // no encrypted strings
                 continue;
-            }
 
             InstructionModifier clinitModifier = new InstructionModifier();
 
@@ -170,9 +194,8 @@ public class SimpleStringEncryptionTransformer extends Transformer<SimpleStringE
                     return null;
                 }
                 JavaWrapper storedValue = JavaClass.forName(vm, classNode.name).getStaticField(field.getKey(), field.getValue());
-                if (storedValue.is(JavaValueType.NULL)) {
+                if (storedValue.is(JavaValueType.NULL))
                     return null;
-                }
                 if (storedValue.getJavaClass() == vm.getSystemDictionary().getJavaLangString()) {
                     String value = vm.convertJavaObjectToString(storedValue);
                     decryptedSingularStrings.put(targetField, value);
@@ -184,9 +207,9 @@ public class SimpleStringEncryptionTransformer extends Transformer<SimpleStringE
                     insertBefore.add(new TypeInsnNode(ANEWARRAY, "java/lang/String"));
                     for (int i = 0; i < stringArray.length(); i++) {
                         String value = vm.convertJavaObjectToString(stringArray.get(i));
-                        if (value == null) {
+                        if (value == null)
                             return null;
-                        }
+
                         insertBefore.add(new InsnNode(DUP));
                         insertBefore.add(new LdcInsnNode(i));
                         insertBefore.add(new LdcInsnNode(value));
@@ -216,7 +239,7 @@ public class SimpleStringEncryptionTransformer extends Transformer<SimpleStringE
             };
 
             Consumer<ExecutionOptions.BreakpointInfo> parseLocalStrings = info -> {
-                for (InstructionMatcher clinitLocalString : clinitLocalStrings) {
+                for (InstructionMatcher clinitLocalString : clinitLocalStrings)
                     if (info.getNow() == clinitLocalString.getCapturedInstruction("aaload")) {
                         JavaArray decryptedArray = info.getLocals().get(registers.iterator().next()).asArray();
 
@@ -229,12 +252,10 @@ public class SimpleStringEncryptionTransformer extends Transformer<SimpleStringE
                             clinitModifier.replace(decrypt.getCapturedInstructions("all").get(0), new LdcInsnNode(decrypted));
                         }
 
-                        if (allPuts.isEmpty()) {
+                        if (allPuts.isEmpty())
                             // abort if there were no decryption fields, since local strings takes one pass
                             throw AbortException.INSTANCE;
-                        }
                     }
-                }
             };
 
             Object breakpointToken = vm.addBreakpoint(info -> {
@@ -246,11 +267,9 @@ public class SimpleStringEncryptionTransformer extends Transformer<SimpleStringE
                 vm.execute(classNode, clinit);
                 // try decrypting it one last time
                 tryDecryptFields.run();
-                for (Map.Entry<FieldNode, List<AbstractInsnNode>> entry : allPuts.entrySet()) {
-                    if (!decryptedFields.contains(entry.getKey())) {
+                for (Map.Entry<FieldNode, List<AbstractInsnNode>> entry : allPuts.entrySet())
+                    if (!decryptedFields.contains(entry.getKey()))
                         oops("couldn't decrypt field {} {} {}", classNode.name, entry.getKey().name, entry.getKey().desc);
-                    }
-                }
             } catch (AbortException ignored) {
             } catch (VMException e) {
                 logger.debug("Exception while initializing {}, should be fine", classNode.name);
@@ -263,9 +282,8 @@ public class SimpleStringEncryptionTransformer extends Transformer<SimpleStringE
 
             clinitModifier.apply(clinit);
 
-            if (getConfig().isPropogateStrings()) {
+            if (getConfig().isPropogateStrings())
                 propogateStrings(classNode, vm, decryptedSingularStrings);
-            }
         }
 
         vm.shutdown();
@@ -342,18 +360,9 @@ public class SimpleStringEncryptionTransformer extends Transformer<SimpleStringE
                 currentValue = currentFrame.getLocal(((VarInsnNode) now).var);
                 break;
             }
-            case ASTORE: {
-                currentValue = currentFrame.getStack(currentFrame.getStackSize() - 1);
-                break;
-            }
-            case DUP: {
-                currentValue = currentFrame.getStack(currentFrame.getStackSize() - 1);
-                break;
-            }
-            case PUTSTATIC: {
-                currentValue = currentFrame.getStack(currentFrame.getStackSize() - 1);
-                break;
-            }
+            case ASTORE:
+            case DUP:
+            case PUTSTATIC:
             case SWAP: {
                 currentValue = currentFrame.getStack(currentFrame.getStackSize() - 1);
                 break;

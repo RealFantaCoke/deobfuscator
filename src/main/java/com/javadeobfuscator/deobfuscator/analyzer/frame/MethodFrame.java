@@ -20,7 +20,6 @@ import java.util.Collections;
 import java.util.List;
 
 public class MethodFrame extends Frame {
-
     private Frame instance;
     private List<Frame> args;
     private String owner;
@@ -34,12 +33,11 @@ public class MethodFrame extends Frame {
         this.owner = owner;
         this.name = name;
         this.desc = desc;
-        if (this.instance != null) {
+        if (this.instance != null)
             this.instance.children.add(this);
-        }
-        for (Frame arg : this.args) {
+
+        for (Frame arg : this.args)
             arg.children.add(this);
-        }
     }
 
     public List<Frame> getArgs() {

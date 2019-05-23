@@ -16,16 +16,16 @@
 
 package com.javadeobfuscator.deobfuscator.rules.zelix;
 
-import com.javadeobfuscator.deobfuscator.*;
-import com.javadeobfuscator.deobfuscator.rules.*;
-import com.javadeobfuscator.deobfuscator.transformers.*;
-import com.javadeobfuscator.deobfuscator.transformers.zelix.v9.utils.*;
-import com.javadeobfuscator.deobfuscator.utils.*;
-import org.objectweb.asm.*;
-import org.objectweb.asm.tree.*;
-
-import java.lang.reflect.*;
-import java.util.*;
+import com.javadeobfuscator.deobfuscator.Deobfuscator;
+import com.javadeobfuscator.deobfuscator.rules.Rule;
+import com.javadeobfuscator.deobfuscator.transformers.Transformer;
+import com.javadeobfuscator.deobfuscator.transformers.zelix.v9.utils.MethodParameterChangeClassFinder;
+import com.javadeobfuscator.deobfuscator.utils.TransformerHelper;
+import java.lang.reflect.Modifier;
+import java.util.Collection;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.MethodNode;
 
 public class RuleMethodParameterChangeStringEncryption implements Rule, Opcodes {
     @Override
@@ -38,22 +38,18 @@ public class RuleMethodParameterChangeStringEncryption implements Rule, Opcodes 
 
     @Override
     public String test(Deobfuscator deobfuscator) {
-        if (new RuleSuspiciousClinit().test(deobfuscator) == null) {
+        if (new RuleSuspiciousClinit().test(deobfuscator) == null)
             return null;
-        }
 
-        if (new MethodParameterChangeClassFinder().find(deobfuscator.getClasses().values()).isEmpty()) {
+        if (new MethodParameterChangeClassFinder().find(deobfuscator.getClasses().values()).isEmpty())
             return null;
-        }
 
         for (ClassNode classNode : deobfuscator.getClasses().values()) {
             MethodNode enhanced = TransformerHelper.findMethodNode(classNode, null, "(III)Ljava/lang/String;");
-            if (enhanced == null) {
+            if (enhanced == null)
                 continue;
-            }
-            if (!Modifier.isStatic(enhanced.access)) {
+            if (!Modifier.isStatic(enhanced.access))
                 continue;
-            }
 
             boolean isMPC = true;
 
@@ -65,9 +61,8 @@ public class RuleMethodParameterChangeStringEncryption implements Rule, Opcodes 
             isMPC = isMPC && TransformerHelper.countOccurencesOf(enhanced, IXOR) > 0;
             isMPC = isMPC && TransformerHelper.countOccurencesOf(enhanced, IREM) > 0;
 
-            if (isMPC) {
+            if (isMPC)
                 return "Found potential method parameter changed string encrypted class " + classNode.name;
-            }
         }
 
         return null;

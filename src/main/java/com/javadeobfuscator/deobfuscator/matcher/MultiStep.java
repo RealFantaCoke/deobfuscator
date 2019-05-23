@@ -30,14 +30,13 @@ public class MultiStep implements Step {
     public AbstractInsnNode tryMatch(InstructionMatcher matcher, AbstractInsnNode now) {
         for (Step step : steps) {
             while (!Utils.isInstruction(now)) now = now.getNext();
-            if (now == null) {
+            if (now == null)
                 return null;
-            }
 
             AbstractInsnNode next = step.tryMatch(matcher, now);
-            if (next == null) {
+            if (next == null)
                 return null;
-            }
+
             now = next;
         }
         return now;

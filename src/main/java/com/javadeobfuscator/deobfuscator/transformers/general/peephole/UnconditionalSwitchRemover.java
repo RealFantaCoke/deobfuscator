@@ -19,16 +19,20 @@ package com.javadeobfuscator.deobfuscator.transformers.general.peephole;
 import com.javadeobfuscator.deobfuscator.config.TransformerConfig;
 import com.javadeobfuscator.deobfuscator.transformers.Transformer;
 import com.javadeobfuscator.deobfuscator.utils.Utils;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.tree.*;
+import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.InsnList;
+import org.objectweb.asm.tree.IntInsnNode;
+import org.objectweb.asm.tree.JumpInsnNode;
+import org.objectweb.asm.tree.LabelNode;
+import org.objectweb.asm.tree.LdcInsnNode;
+import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.TableSwitchInsnNode;
 
 public class UnconditionalSwitchRemover extends Transformer<TransformerConfig> {
-	
     @Override
     public boolean transform() throws Throwable {
         AtomicInteger counter = new AtomicInteger();
@@ -39,34 +43,30 @@ public class UnconditionalSwitchRemover extends Transformer<TransformerConfig> {
                 InsnList insns = clinit.instructions;
                 for (int i = 0; i < insns.size(); i++) {
                     AbstractInsnNode node = insns.get(i);
-                    if (node instanceof LabelNode) {
+                    if (node instanceof LabelNode)
                         mapping.put((LabelNode) node, (LabelNode) node);
-                    }
                 }
                 for (int i = 0; i < insns.size(); i++) {
                     AbstractInsnNode node = insns.get(i);
                     int prev = Utils.iconstToInt(node.getOpcode());
-                    if (prev == Integer.MIN_VALUE) {
-                        if (node.getOpcode() == Opcodes.BIPUSH || node.getOpcode() == Opcodes.SIPUSH) {
+                    if (prev == Integer.MIN_VALUE)
+                        if (node.getOpcode() == Opcodes.BIPUSH || node.getOpcode() == Opcodes.SIPUSH)
                             prev = ((IntInsnNode) node).operand;
-                        }
-                    }
-                    if (prev == Integer.MIN_VALUE) {
-                        if (node instanceof LdcInsnNode && ((LdcInsnNode) node).cst instanceof Integer) {
+                    if (prev == Integer.MIN_VALUE)
+                        if (node instanceof LdcInsnNode && ((LdcInsnNode) node).cst instanceof Integer)
                             prev = (Integer) ((LdcInsnNode) node).cst;
-                        }
-                    }
+
                     if (prev != Integer.MIN_VALUE) {
                         AbstractInsnNode next = Utils.getNextFollowGoto(node);
                         if (next instanceof TableSwitchInsnNode) {
                             TableSwitchInsnNode cast = (TableSwitchInsnNode) next;
                             int index = prev - cast.min;
                             LabelNode go = null;
-                            if (index >= 0 && index < cast.labels.size()) {
+                            if (index >= 0 && index < cast.labels.size())
                                 go = cast.labels.get(index);
-                            } else {
+                            else
                                 go = cast.dflt;
-                            }
+
                             InsnList replace = new InsnList();
                             replace.add(new JumpInsnNode(Opcodes.GOTO, go));
                             insns.insertBefore(node, replace);
@@ -84,23 +84,19 @@ public class UnconditionalSwitchRemover extends Transformer<TransformerConfig> {
                 InsnList insns = clinit.instructions;
                 for (int i = 0; i < insns.size(); i++) {
                     AbstractInsnNode node = insns.get(i);
-                    if (node instanceof LabelNode) {
+                    if (node instanceof LabelNode)
                         mapping.put((LabelNode) node, (LabelNode) node);
-                    }
                 }
                 for (int i = 0; i < insns.size(); i++) {
                     AbstractInsnNode node = insns.get(i);
                     int prev = Utils.iconstToInt(node.getOpcode());
-                    if (prev == Integer.MIN_VALUE) {
-                        if (node.getOpcode() == Opcodes.BIPUSH || node.getOpcode() == Opcodes.SIPUSH) {
+                    if (prev == Integer.MIN_VALUE)
+                        if (node.getOpcode() == Opcodes.BIPUSH || node.getOpcode() == Opcodes.SIPUSH)
                             prev = ((IntInsnNode) node).operand;
-                        }
-                    }
-                    if (prev == Integer.MIN_VALUE) {
-                        if (node instanceof LdcInsnNode && ((LdcInsnNode) node).cst instanceof Integer) {
+                    if (prev == Integer.MIN_VALUE)
+                        if (node instanceof LdcInsnNode && ((LdcInsnNode) node).cst instanceof Integer)
                             prev = (Integer) ((LdcInsnNode) node).cst;
-                        }
-                    }
+
                     if (prev != Integer.MIN_VALUE) {
                         AbstractInsnNode next = Utils.getNextFollowGoto(node);
                         if (next.getOpcode() == Opcodes.SWAP) {
@@ -113,12 +109,12 @@ public class UnconditionalSwitchRemover extends Transformer<TransformerConfig> {
                                     if (next instanceof TableSwitchInsnNode) {
                                         TableSwitchInsnNode cast = (TableSwitchInsnNode) next;
                                         int index = prev - cast.min;
-                                        LabelNode go = null;
-                                        if (index >= 0 && index < cast.labels.size()) {
+                                        LabelNode go;
+                                        if (index >= 0 && index < cast.labels.size())
                                             go = cast.labels.get(index);
-                                        } else {
+                                        else
                                             go = cast.dflt;
-                                        }
+
                                         InsnList replace = new InsnList();
                                         replace.add(methodNode.clone(null));
                                         replace.add(new JumpInsnNode(Opcodes.GOTO, go));

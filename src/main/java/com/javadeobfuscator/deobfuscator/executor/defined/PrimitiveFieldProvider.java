@@ -23,30 +23,30 @@ import com.javadeobfuscator.deobfuscator.executor.values.JavaValue;
 
 public class PrimitiveFieldProvider extends FieldProvider {
     public Object getField(String className, String fieldName, String fieldDesc, JavaValue targetObject, Context context) {
-        if (!fieldName.equals("TYPE")) {
+        if (!fieldName.equals("TYPE"))
             throw new IllegalStateException();
-        }
+
         switch (className) {
-        case "java/lang/Integer":
-            return new JavaClass("int", context);
-        case "java/lang/Byte":
-            return new JavaClass("byte", context);
-        case "java/lang/Short":
-            return new JavaClass("short", context);
-        case "java/lang/Float":
-            return new JavaClass("float", context);
-        case "java/lang/Boolean":
-            return new JavaClass("boolean", context);
-        case "java/lang/Character":
-            return new JavaClass("char", context);
-        case "java/lang/Double":
-            return new JavaClass("double", context);
-        case "java/lang/Long":
-            return new JavaClass("long", context);
-        case "java/lang/Void":
-            return new JavaClass("void", context);
-        default:
-            throw new IllegalStateException();
+            case "java/lang/Integer":
+                return new JavaClass("int", context);
+            case "java/lang/Byte":
+                return new JavaClass("byte", context);
+            case "java/lang/Short":
+                return new JavaClass("short", context);
+            case "java/lang/Float":
+                return new JavaClass("float", context);
+            case "java/lang/Boolean":
+                return new JavaClass("boolean", context);
+            case "java/lang/Character":
+                return new JavaClass("char", context);
+            case "java/lang/Double":
+                return new JavaClass("double", context);
+            case "java/lang/Long":
+                return new JavaClass("long", context);
+            case "java/lang/Void":
+                return new JavaClass("void", context);
+            default:
+                throw new IllegalStateException();
         }
     }
 
@@ -55,22 +55,22 @@ public class PrimitiveFieldProvider extends FieldProvider {
     }
 
     public boolean canGetField(String className, String fieldName, String fieldDesc, JavaValue targetObject, Context context) {
-        if (!fieldName.equals("TYPE")) {
+        if (!fieldName.equals("TYPE"))
             return false;
-        }
+
         switch (className) {
-        case "java/lang/Integer":
-        case "java/lang/Byte":
-        case "java/lang/Short":
-        case "java/lang/Float":
-        case "java/lang/Boolean":
-        case "java/lang/Character":
-        case "java/lang/Double":
-        case "java/lang/Long":
-        case "java/lang/Void":
-            return true;
-        default:
-            return false;
+            case "java/lang/Integer":
+            case "java/lang/Byte":
+            case "java/lang/Short":
+            case "java/lang/Float":
+            case "java/lang/Boolean":
+            case "java/lang/Character":
+            case "java/lang/Double":
+            case "java/lang/Long":
+            case "java/lang/Void":
+                return true;
+            default:
+                return false;
         }
     }
 

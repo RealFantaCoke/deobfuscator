@@ -16,14 +16,14 @@
 
 package com.javadeobfuscator.deobfuscator.rules.stringer;
 
-import com.javadeobfuscator.deobfuscator.*;
-import com.javadeobfuscator.deobfuscator.rules.*;
-import com.javadeobfuscator.deobfuscator.transformers.*;
-import com.javadeobfuscator.deobfuscator.transformers.stringer.v3.*;
-import com.javadeobfuscator.deobfuscator.utils.*;
-import org.objectweb.asm.tree.*;
-
-import java.util.*;
+import com.javadeobfuscator.deobfuscator.Deobfuscator;
+import com.javadeobfuscator.deobfuscator.rules.Rule;
+import com.javadeobfuscator.deobfuscator.transformers.Transformer;
+import com.javadeobfuscator.deobfuscator.transformers.stringer.v3.StringEncryptionTransformer;
+import com.javadeobfuscator.deobfuscator.utils.TransformerHelper;
+import java.util.Collection;
+import java.util.Collections;
+import org.objectweb.asm.tree.ClassNode;
 
 public class RuleStringDecryptorWithThread implements Rule {
     @Override
@@ -34,24 +34,18 @@ public class RuleStringDecryptorWithThread implements Rule {
     @Override
     public String test(Deobfuscator deobfuscator) {
         for (ClassNode classNode : deobfuscator.getClasses().values()) {
-            if (!classNode.superName.equals("java/lang/Thread")) {
+            if (!classNode.superName.equals("java/lang/Thread"))
                 continue;
-            }
 
             // Check for expected fields
-            if (TransformerHelper.findFieldNode(classNode, null, "[Ljava/lang/Object;") == null) {
+            if (TransformerHelper.findFieldNode(classNode, null, "[Ljava/lang/Object;") == null)
                 continue;
-            }
-            if (TransformerHelper.findFieldNode(classNode, null, "I") == null) {
+            if (TransformerHelper.findFieldNode(classNode, null, "I") == null)
                 continue;
-            }
-            if (TransformerHelper.findFieldNode(classNode, null, "[Ljava/math/BigInteger;") == null) {
+            if (TransformerHelper.findFieldNode(classNode, null, "[Ljava/math/BigInteger;") == null)
                 continue;
-            }
-
-            if (TransformerHelper.findMethodNode(classNode, "<init>", "(I)V") == null) {
+            if (TransformerHelper.findMethodNode(classNode, "<init>", "(I)V") == null)
                 continue;
-            }
 
             return "Found possible string decryption class " + classNode.name;
         }

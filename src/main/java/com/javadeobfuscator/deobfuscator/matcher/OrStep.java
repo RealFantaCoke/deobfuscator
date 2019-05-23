@@ -29,9 +29,8 @@ public class OrStep implements Step {
     public AbstractInsnNode tryMatch(InstructionMatcher matcher, AbstractInsnNode now) {
         for (Step step : steps) {
             AbstractInsnNode next = step.tryMatch(matcher, now);
-            if (next != null) {
+            if (next != null)
                 return next;
-            }
         }
         return null;
     }

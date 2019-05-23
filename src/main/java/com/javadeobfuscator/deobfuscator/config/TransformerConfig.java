@@ -17,12 +17,16 @@
 package com.javadeobfuscator.deobfuscator.config;
 
 import com.javadeobfuscator.deobfuscator.transformers.Transformer;
-import com.javadeobfuscator.javavm.*;
-
-import java.lang.annotation.*;
+import com.javadeobfuscator.javavm.VirtualMachine;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Inherited;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
-import java.util.function.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
 
 public class TransformerConfig {
     @Inherited
@@ -72,8 +76,7 @@ public class TransformerConfig {
             }
 
             throw new RuntimeException("Could not find suitable constructor for TransformerConfig");
-        } else {
+        } else
             return new TransformerConfig(implementation);
-        }
     }
 }

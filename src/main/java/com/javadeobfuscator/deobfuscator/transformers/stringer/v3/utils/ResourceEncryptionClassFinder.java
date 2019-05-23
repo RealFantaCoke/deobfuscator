@@ -17,43 +17,39 @@
 package com.javadeobfuscator.deobfuscator.transformers.stringer.v3.utils;
 
 import com.javadeobfuscator.deobfuscator.transformers.ClassFinder;
-import com.javadeobfuscator.deobfuscator.transformers.Transformer;
 import com.javadeobfuscator.deobfuscator.utils.TransformerHelper;
-import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.FieldNode;
-import org.objectweb.asm.tree.MethodNode;
-
 import java.lang.reflect.Modifier;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.FieldNode;
+import org.objectweb.asm.tree.MethodNode;
 
 public class ResourceEncryptionClassFinder implements ClassFinder {
     @Override
     public Set<ClassNode> find(Collection<ClassNode> classes) {
         Set<ClassNode> results = new HashSet<>();
         for (ClassNode classNode : classes) {
-            if (!classNode.superName.equals("java/io/FilterInputStream")) {
+            if (!classNode.superName.equals("java/io/FilterInputStream"))
                 continue;
-            }
+
             FieldNode objArr = TransformerHelper.findFieldNode(classNode, null, "[Ljava/lang/Object;");
-            if (objArr == null) {
+            if (objArr == null)
                 continue;
-            }
-            if (!Modifier.isStatic(objArr.access)) {
+            if (!Modifier.isStatic(objArr.access))
                 continue;
-            }
+
             FieldNode intArr = TransformerHelper.findFieldNode(classNode, null, "[I");
-            if (intArr == null) {
+            if (intArr == null)
                 continue;
-            }
-            if (Modifier.isStatic(intArr.access)) {
+            if (Modifier.isStatic(intArr.access))
                 continue;
-            }
+
             MethodNode ctor = TransformerHelper.findMethodNode(classNode, "<init>", "(Ljava/io/InputStream;)V");
-            if (ctor == null) {
+            if (ctor == null)
                 continue;
-            }
+
             results.add(classNode);
         }
         return results;

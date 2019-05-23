@@ -18,20 +18,24 @@ package com.javadeobfuscator.deobfuscator.transformers.normalizer;
 
 import com.javadeobfuscator.deobfuscator.config.TransformerConfig;
 import com.javadeobfuscator.deobfuscator.utils.ClassTree;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 
-import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-
 @TransformerConfig.ConfigOptions(configClass = MethodNormalizer.Config.class)
 public class MethodNormalizer extends AbstractNormalizer<MethodNormalizer.Config> {
-
     @Override
     public void remap(CustomRemapper remapper) {
-
         AtomicInteger id = new AtomicInteger(0);
         classNodes().forEach(classNode -> {
             Set<String> allClasses = new HashSet<>();
@@ -62,9 +66,9 @@ public class MethodNormalizer extends AbstractNormalizer<MethodNormalizer.Config
                 final Type methodType = Type.getReturnType(methodNode.desc);
                 final AtomicBoolean isLibrary = new AtomicBoolean(false);
                 if (methodType.getSort() != Type.OBJECT && methodType.getSort() != Type.ARRAY) {
-                    if (methodType.getSort() == Type.METHOD) {
+                    if (methodType.getSort() == Type.METHOD)
                         throw new IllegalArgumentException("Did not expect method");
-                    }
+
                     allClasses.stream().map(name -> this.getDeobfuscator().assureLoaded(name)).forEach(node -> {
                         boolean foundSimilar = false;
                         boolean equals = false;
@@ -81,12 +85,11 @@ public class MethodNormalizer extends AbstractNormalizer<MethodNormalizer.Config
                             }
                         }
                         if (foundSimilar) {
-                            if (equals) {
+                            if (equals)
                                 allMethodNodes.put(new AbstractMap.SimpleEntry<>(node, equalsMethod), true);
-                            }
-                        } else {
+
+                        } else
                             allMethodNodes.put(new AbstractMap.SimpleEntry<>(node, methodNode), false);
-                        }
                     });
                 } else if (methodType.getSort() == Type.ARRAY) {
                     Type elementType = methodType.getElementType();
@@ -113,12 +116,10 @@ public class MethodNormalizer extends AbstractNormalizer<MethodNormalizer.Config
                                 }
                             }
                             if (foundSimilar) {
-                                if (equals) {
+                                if (equals)
                                     allMethodNodes.put(new AbstractMap.SimpleEntry<>(node, equalsMethod), true);
-                                }
-                            } else {
+                            } else
                                 allMethodNodes.put(new AbstractMap.SimpleEntry<>(node, methodNode), false);
-                            }
                         });
                     } else {
                         allClasses.stream().map(name -> this.getDeobfuscator().assureLoaded(name)).forEach(node -> {
@@ -137,12 +138,10 @@ public class MethodNormalizer extends AbstractNormalizer<MethodNormalizer.Config
                                 }
                             }
                             if (foundSimilar) {
-                                if (equals) {
+                                if (equals)
                                     allMethodNodes.put(new AbstractMap.SimpleEntry<>(node, equalsMethod), true);
-                                }
-                            } else {
+                            } else
                                 allMethodNodes.put(new AbstractMap.SimpleEntry<>(node, methodNode), false);
-                            }
                         });
                     }
                 } else if (methodType.getSort() == Type.OBJECT) {
@@ -167,26 +166,23 @@ public class MethodNormalizer extends AbstractNormalizer<MethodNormalizer.Config
                                 }
                             }
                         }
-                        if (foundSimilar) {
-                            if (equals) {
+                        if (foundSimilar)
+                            if (equals)
                                 allMethodNodes.put(new AbstractMap.SimpleEntry<>(node, equalsMethod), true);
-                            } else {
+                            else
                                 allMethodNodes.put(new AbstractMap.SimpleEntry<>(node, methodNode), false);
-                            }
-                        } else {
+                        else
                             allMethodNodes.put(new AbstractMap.SimpleEntry<>(node, methodNode), false);
-                        }
                     });
                 }
 
                 allMethodNodes.forEach((key, value) -> {
-                    if (getDeobfuscator().isLibrary(key.getKey()) && value) {
+                    if (getDeobfuscator().isLibrary(key.getKey()) && value)
                         isLibrary.set(true);
-                    }
                 });
 
-                if (!isLibrary.get()) {
-                    if (!remapper.methodMappingExists(classNode.name, methodNode.name, methodNode.desc)) {
+                if (!isLibrary.get())
+                    if (!remapper.methodMappingExists(classNode.name, methodNode.name, methodNode.desc))
                         while (true) {
                             String name = "Method" + id.getAndIncrement();
                             if (remapper.mapMethodName(classNode.name, methodNode.name, methodNode.desc, name, false)) {
@@ -196,8 +192,6 @@ public class MethodNormalizer extends AbstractNormalizer<MethodNormalizer.Config
                                 break;
                             }
                         }
-                    }
-                }
             }
         });
     }

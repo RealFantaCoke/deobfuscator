@@ -17,44 +17,38 @@
 package com.javadeobfuscator.deobfuscator.transformers.stringer.v3.utils;
 
 import com.javadeobfuscator.deobfuscator.transformers.ClassFinder;
-import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.FieldNode;
-import org.objectweb.asm.tree.MethodNode;
-
 import java.lang.reflect.Modifier;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.FieldNode;
+import org.objectweb.asm.tree.MethodNode;
 
 public class StringEncryptionClassFinder implements ClassFinder {
     @Override
     public Set<ClassNode> find(Collection<ClassNode> classes) {
         Set<ClassNode> found = new HashSet<>();
 
-        for (ClassNode classNode : classes) {
+        for (ClassNode classNode : classes)
             if (classNode.superName.equals("java/lang/Thread")) {
                 boolean foundBigInteger = false;
-                for (FieldNode fieldNode : classNode.fields) {
+                for (FieldNode fieldNode : classNode.fields)
                     if (fieldNode.desc.equals("[Ljava/math/BigInteger;")) {
                         foundBigInteger = true;
                         break;
                     }
-                }
                 boolean foundInit = false;
-                for (MethodNode methodNode : classNode.methods) {
+                for (MethodNode methodNode : classNode.methods)
                     if (methodNode.desc.equals("(ILjava/lang/Object;)V") &&
                             Modifier.isFinal(methodNode.access) &&
                             Modifier.isPrivate(methodNode.access) &&
-                            Modifier.isStatic(methodNode.access)) {
+                            Modifier.isStatic(methodNode.access))
                         foundInit = true;
-                    }
-                }
 
-                if (foundBigInteger && foundInit) {
+                if (foundBigInteger && foundInit)
                     found.add(classNode);
-                }
             }
-        }
 
         return found;
     }

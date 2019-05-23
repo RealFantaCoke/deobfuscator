@@ -25,7 +25,17 @@ import com.javadeobfuscator.deobfuscator.analyzer.frame.SwapFrame;
 import com.javadeobfuscator.deobfuscator.analyzer.frame.SwitchFrame;
 import com.javadeobfuscator.deobfuscator.analyzer.frame.ThrowFrame;
 import com.javadeobfuscator.deobfuscator.exceptions.PreventableStackOverflowError;
-
+import com.javadeobfuscator.deobfuscator.utils.PrimitiveUtils;
+import java.lang.reflect.Modifier;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -44,18 +54,6 @@ import org.objectweb.asm.tree.TableSwitchInsnNode;
 import org.objectweb.asm.tree.TryCatchBlockNode;
 import org.objectweb.asm.tree.TypeInsnNode;
 import org.objectweb.asm.tree.VarInsnNode;
-import com.javadeobfuscator.deobfuscator.utils.PrimitiveUtils;
-
-import java.lang.reflect.Modifier;
-import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import static org.objectweb.asm.Opcodes.AALOAD;
 import static org.objectweb.asm.Opcodes.AASTORE;
@@ -222,15 +220,15 @@ public class MethodAnalyzer {
     private static final boolean DEBUG = false;
 
     public static AnalyzerResult analyze(ClassNode classNode, MethodNode method) {
-        if (Modifier.isAbstract(method.access) || Modifier.isNative(method.access)) {
+        if (Modifier.isAbstract(method.access) || Modifier.isNative(method.access))
             return AnalyzerResult.EMPTY_RESULT;
-        }
+
         AnalyzerResult result = new AnalyzerResult();
         result.frames = new HashMap<>();
 
         List<StackObject> stack = new ArrayList<>();
         List<StackObject> locals = new ArrayList<>();
-        
+
         int counter = 0;
         if (!Modifier.isStatic(method.access)) {
             locals.add(new StackObject(new ArgumentFrame(Opcodes.ASTORE, 0), classNode.name));
@@ -240,30 +238,29 @@ public class MethodAnalyzer {
         for (Type type : Type.getArgumentTypes(method.desc)) {
             Class<?> clazz = PrimitiveUtils.getPrimitiveByName(type.getClassName());
             int opcode;
-            if(clazz == int.class)
-            	opcode = Opcodes.ISTORE;
-            else if(clazz == long.class)
-            	opcode = Opcodes.LSTORE;
-            else if(clazz == double.class)
-            	opcode = Opcodes.DSTORE;
-            else if(clazz == float.class)
-            	opcode = Opcodes.FSTORE;
+            if (clazz == int.class)
+                opcode = Opcodes.ISTORE;
+            else if (clazz == long.class)
+                opcode = Opcodes.LSTORE;
+            else if (clazz == double.class)
+                opcode = Opcodes.DSTORE;
+            else if (clazz == float.class)
+                opcode = Opcodes.FSTORE;
             else
-            	opcode = Opcodes.ASTORE;
+                opcode = Opcodes.ASTORE;
             ArgumentFrame frame = new ArgumentFrame(opcode, counter);
             counter++;
-            if (clazz == null) {
+            if (clazz == null)
                 locals.add(new StackObject(Object.class, frame, type.getInternalName()));
-            } else {
+            else
                 locals.add(new StackObject(clazz, frame));
-            }
-            if (clazz == double.class || clazz == long.class) {
+
+            if (clazz == double.class || clazz == long.class)
                 locals.add(new StackObject(clazz, frame));
-            }
         }
 
         Map<AbstractInsnNode, List<TryCatchBlockNode>> handlers = new HashMap<>();
-        if (method.tryCatchBlocks != null) {
+        if (method.tryCatchBlocks != null)
             for (TryCatchBlockNode node : method.tryCatchBlocks) {
                 AbstractInsnNode start = node.start;
                 while (start != node.end) {
@@ -271,14 +268,13 @@ public class MethodAnalyzer {
                     start = start.getNext();
                 }
             }
-        }
 
         try {
             execute(classNode, method, method.instructions.getFirst(), stack, locals, handlers, result, new HashSet<>());
         } catch (StackOverflowError e) {
-            if (Boolean.getBoolean("com.javadeobfuscator.MethodAnalyzer.debug") || DEBUG) {
+            if (Boolean.getBoolean("com.javadeobfuscator.MethodAnalyzer.debug") || DEBUG)
                 throw e;
-            }
+
             throw new PreventableStackOverflowError("Ran out of stack space while analyzing a method");
         }
         return result;
@@ -290,11 +286,11 @@ public class MethodAnalyzer {
 
         ArrayLoadFrame currentFrame = new ArrayLoadFrame(opcode, index, array);
 
-        if (type == Object.class) {
+        if (type == Object.class)
             stack.add(0, new StackObject(type, currentFrame, "java/lang/Object")); //todo ugh
-        } else {
+        else
             stack.add(0, new StackObject(type, currentFrame));
-        }
+
         return currentFrame;
     }
 
@@ -312,7 +308,6 @@ public class MethodAnalyzer {
         return currentFrame;
     }
 
-    @SuppressWarnings("unchecked")
     private static <P> Frame doUnaryMath(int opcode, List<StackObject> stack, Class<P> prim) {
         Frame target = stack.remove(0).value;
         Frame currentFrame = new MathFrame(opcode, target);
@@ -321,7 +316,6 @@ public class MethodAnalyzer {
 
     }
 
-    @SuppressWarnings("unchecked")
     private static <P> Frame doBinaryMath(int opcode, List<StackObject> stack, Class<P> prim) {
         Frame obj1 = stack.remove(0).value;
         Frame obj2 = stack.remove(0).value;
@@ -331,15 +325,11 @@ public class MethodAnalyzer {
     }
 
     private static void assureSize(List<StackObject> list, int size) {
-        while (list.size() <= size) {
+        while (list.size() <= size)
             list.add(null);
-        }
     }
 
-    @SuppressWarnings({
-            "unchecked",
-            "unused"
-    })
+    @SuppressWarnings("unused")
     private static void execute(ClassNode classNode, MethodNode method, AbstractInsnNode now, List<StackObject> stack, List<StackObject> locals, Map<AbstractInsnNode, List<TryCatchBlockNode>> handlers, AnalyzerResult result, Set<Map.Entry<AbstractInsnNode, AbstractInsnNode>> jumped) {
 //        System.out.println("Executing " + classNode.name + " " + method.name + method.desc + " " + method.instructions.indexOf(now) + " " + Utils.prettyprint(now));
         boolean done = false;
@@ -397,15 +387,15 @@ public class MethodAnalyzer {
                     currentFrame = new LdcFrame(now.getOpcode(), cast.cst);
                     Class<?> unwrapped = Primitives.unwrap(cast.cst.getClass());
                     if (unwrapped == cast.cst.getClass()) {
-                        if (cast.cst instanceof Type) {
+                        if (cast.cst instanceof Type)
                             unwrapped = Class.class;
-                        } else {
+                        else
                             unwrapped = cast.cst.getClass();
-                        }
+
                         stack.add(0, new StackObject(Object.class, currentFrame, Type.getType(unwrapped).getInternalName()));
-                    } else {
+                    } else
                         stack.add(0, new StackObject(unwrapped, currentFrame));
-                    }
+
                     break;
                 }
                 case ILOAD:
@@ -491,12 +481,9 @@ public class MethodAnalyzer {
                 }
                 case DUP_X1: {
                     StackObject obj = stack.get(0);
-                    if (obj.type == double.class || obj.type == long.class) {
+                    if (obj.type == double.class || obj.type == long.class)
                         throw new IllegalStateException();
-                    }
-                    if (obj.type == double.class || obj.type == long.class) {
-                        throw new IllegalStateException();
-                    }
+
                     stack.add(2, obj);
                     currentFrame = new DupFrame(now.getOpcode(), obj.value);
                     break;
@@ -505,11 +492,11 @@ public class MethodAnalyzer {
                     StackObject obj = stack.get(1);
                     StackObject zeroth = stack.get(0);
                     currentFrame = new DupFrame(now.getOpcode(), zeroth.value);
-                    if (obj.type == double.class || obj.type == long.class) {
+                    if (obj.type == double.class || obj.type == long.class)
                         stack.add(2, stack.get(0));
-                    } else {
+                    else
                         stack.add(3, stack.get(0));
-                    }
+
                     break;
                 }
                 case DUP2: {
@@ -546,11 +533,10 @@ public class MethodAnalyzer {
                     if (obj.type == double.class || obj.type == long.class) {
                         obj = stack.get(1);
                         currentFrame = new DupFrame(now.getOpcode(), o.value);
-                        if (obj.type == double.class || obj.type == long.class) {
+                        if (obj.type == double.class || obj.type == long.class)
                             stack.add(2, o);
-                        } else {
+                        else
                             stack.add(3, o);
-                        }
                     } else {
                         StackObject o1 = stack.get(1);
                         obj = stack.get(2);
@@ -762,11 +748,11 @@ public class MethodAnalyzer {
                     Type type = Type.getType(cast.desc);
                     Class<?> clazz = PrimitiveUtils.getPrimitiveByName(type.getClassName());
                     currentFrame = new FieldFrame(now.getOpcode(), cast.owner, cast.name, cast.desc, null, null);
-                    if (clazz == null) {
+                    if (clazz == null)
                         stack.add(0, new StackObject(Object.class, currentFrame, type.getInternalName()));
-                    } else {
+                    else
                         stack.add(0, new StackObject(clazz, currentFrame));
-                    }
+
                     break;
                 }
                 case PUTSTATIC: {
@@ -780,11 +766,11 @@ public class MethodAnalyzer {
                     Class<?> clazz = PrimitiveUtils.getPrimitiveByName(type.getClassName());
                     currentFrame = new FieldFrame(now.getOpcode(), cast.owner, cast.name, cast.desc, stack.remove(0).value, null);
 
-                    if (clazz == null) {
+                    if (clazz == null)
                         stack.add(0, new StackObject(Object.class, currentFrame, type.getInternalName()));
-                    } else {
+                    else
                         stack.add(0, new StackObject(clazz, currentFrame));
-                    }
+
                     break;
                 }
                 case PUTFIELD: {
@@ -799,17 +785,16 @@ public class MethodAnalyzer {
                     Type type = Type.getReturnType(cast.desc);
                     Class<?> clazz = PrimitiveUtils.getPrimitiveByName(type.getClassName());
                     List<Frame> args = new ArrayList<>();
-                    for (Type t1 : Type.getArgumentTypes(cast.desc)) {
+                    for (Type t1 : Type.getArgumentTypes(cast.desc))
                         args.add(0, stack.remove(0).value);
-                    }
+
                     currentFrame = new MethodFrame(now.getOpcode(), cast.owner, cast.name, cast.desc, stack.remove(0).value, args);
-                    if (type.getSort() != Type.VOID) {
-                        if (clazz == null) {
+                    if (type.getSort() != Type.VOID)
+                        if (clazz == null)
                             stack.add(0, new StackObject(Object.class, currentFrame, type.getInternalName()));
-                        } else {
+                        else
                             stack.add(0, new StackObject(clazz, currentFrame));
-                        }
-                    }
+
                     break;
                 }
                 case INVOKESPECIAL: {
@@ -817,21 +802,20 @@ public class MethodAnalyzer {
                     Type type = Type.getReturnType(cast.desc);
                     Class<?> clazz = PrimitiveUtils.getPrimitiveByName(type.getClassName());
                     List<Frame> args = new ArrayList<>();
-                    for (Type t1 : Type.getArgumentTypes(cast.desc)) {
+                    for (Type t1 : Type.getArgumentTypes(cast.desc))
                         args.add(0, stack.remove(0).value);
-                    }
+
                     StackObject instance = stack.remove(0);
                     //                if (instance.isInitialized && cast.name.equals("<init>"))
                     //                    throw new IllegalArgumentException("Already initialized");
                     instance.initialize();
                     currentFrame = new MethodFrame(now.getOpcode(), cast.owner, cast.name, cast.desc, instance.value, args);
-                    if (type.getSort() != Type.VOID) {
-                        if (clazz == null) {
+                    if (type.getSort() != Type.VOID)
+                        if (clazz == null)
                             stack.add(0, new StackObject(Object.class, currentFrame, type.getInternalName()));
-                        } else {
+                        else
                             stack.add(0, new StackObject(clazz, currentFrame));
-                        }
-                    }
+
                     break;
                 }
                 case INVOKESTATIC: {
@@ -839,17 +823,16 @@ public class MethodAnalyzer {
                     Type type = Type.getReturnType(cast.desc);
                     Class<?> clazz = PrimitiveUtils.getPrimitiveByName(type.getClassName());
                     List<Frame> args = new ArrayList<>();
-                    for (Type t1 : Type.getArgumentTypes(cast.desc)) {
+                    for (Type t1 : Type.getArgumentTypes(cast.desc))
                         args.add(0, stack.remove(0).value);
-                    }
+
                     currentFrame = new MethodFrame(now.getOpcode(), cast.owner, cast.name, cast.desc, null, args);
-                    if (type.getSort() != Type.VOID) {
-                        if (clazz == null) {
+                    if (type.getSort() != Type.VOID)
+                        if (clazz == null)
                             stack.add(0, new StackObject(Object.class, currentFrame, type.getInternalName()));
-                        } else {
+                        else
                             stack.add(0, new StackObject(clazz, currentFrame));
-                        }
-                    }
+
                     break;
                 }
                 case INVOKEINTERFACE: {
@@ -857,17 +840,16 @@ public class MethodAnalyzer {
                     Type type = Type.getReturnType(cast.desc);
                     Class<?> clazz = PrimitiveUtils.getPrimitiveByName(type.getClassName());
                     List<Frame> args = new ArrayList<>();
-                    for (Type t1 : Type.getArgumentTypes(cast.desc)) {
+                    for (Type t1 : Type.getArgumentTypes(cast.desc))
                         args.add(0, stack.remove(0).value);
-                    }
+
                     currentFrame = new MethodFrame(now.getOpcode(), cast.owner, cast.name, cast.desc, stack.remove(0).value, args);
-                    if (type.getSort() != Type.VOID) {
-                        if (clazz == null) {
+                    if (type.getSort() != Type.VOID)
+                        if (clazz == null)
                             stack.add(0, new StackObject(Object.class, currentFrame, type.getInternalName()));
-                        } else {
+                        else
                             stack.add(0, new StackObject(clazz, currentFrame));
-                        }
-                    }
+
                     break;
                 }
                 case INVOKEDYNAMIC: {
@@ -875,17 +857,16 @@ public class MethodAnalyzer {
                     Type type = Type.getReturnType(cast.desc);
                     Class<?> clazz = PrimitiveUtils.getPrimitiveByName(type.getClassName());
                     List<Frame> args = new ArrayList<>();
-                    for (Type t1 : Type.getArgumentTypes(cast.desc)) {
+                    for (Type t1 : Type.getArgumentTypes(cast.desc))
                         args.add(0, stack.remove(0).value);
-                    }
+
                     currentFrame = new MethodFrame(now.getOpcode(), "", cast.name, cast.desc, null, args);
-                    if (type.getSort() != Type.VOID) {
-                        if (clazz == null) {
+                    if (type.getSort() != Type.VOID)
+                        if (clazz == null)
                             stack.add(0, new StackObject(Object.class, currentFrame, type.getInternalName()));
-                        } else {
+                        else
                             stack.add(0, new StackObject(clazz, currentFrame));
-                        }
-                    }
+
                     break;
                     //                    throw new UnsupportedOperationException();
                 }
@@ -907,7 +888,7 @@ public class MethodAnalyzer {
                     Frame len = stack.remove(0).value;
                     TypeInsnNode cast = (TypeInsnNode) now;
                     currentFrame = new NewArrayFrame(now.getOpcode(), cast.desc, len);
-                    String desc = null;
+                    String desc;
                     Type type;
                     try {
                         // if array is multidimensional, type is a descriptor
@@ -917,11 +898,11 @@ public class MethodAnalyzer {
                         // this is especially bad if the object type is something like "LongHashMap" because it starts with an "L"
                         type = Type.getObjectType(cast.desc);
                     }
-                    if (type.getSort() == Type.ARRAY) {
+                    if (type.getSort() == Type.ARRAY)
                         desc = type.getDescriptor();
-                    } else {
+                    else
                         desc = "[" + type.getDescriptor() + ";";
-                    }
+
                     stack.add(0, new StackObject(Object.class, currentFrame, desc));
                     break;
                 }
@@ -959,14 +940,14 @@ public class MethodAnalyzer {
                 case MULTIANEWARRAY: {
                     MultiANewArrayInsnNode cast = (MultiANewArrayInsnNode) now;
                     List<Frame> sizes = new ArrayList<>();
-                    for (int i = 0; i < cast.dims; i++) {
+                    for (int i = 0; i < cast.dims; i++)
                         sizes.add(0, stack.remove(0).value);
-                    }
+
                     currentFrame = new MultiANewArrayFrame(sizes);
                     String desc = cast.desc;
-                    for (int i = 0; i < cast.dims; i++) {
+                    for (int i = 0; i < cast.dims; i++)
                         desc = "[" + desc;
-                    }
+
                     stack.add(0, new StackObject(Object.class, currentFrame, desc));
                     break;
                 }
@@ -991,9 +972,9 @@ public class MethodAnalyzer {
 
                 for (int i = 0; i < locals.size(); i++) {
                     StackObject object = locals.get(i);
-                    if (object == null) {
+                    if (object == null)
                         currentFrame.pushLocal(new Value(ValueType.NULL));
-                    } else {
+                    else {
                         ValueType type = object.getType();
                         String desc = type == ValueType.UNINITIALIZED_THIS ? classNode.name : object.initType;
                         currentFrame.pushLocal(new Value(type, desc));
@@ -1002,9 +983,9 @@ public class MethodAnalyzer {
 
                 for (int i = 0; i < stack.size(); i++) {
                     StackObject object = stack.get(i);
-                    if (object == null) {
+                    if (object == null)
                         throw new IllegalArgumentException();
-                    }
+
                     ValueType type = object.getType();
                     String desc = type == ValueType.UNINITIALIZED_THIS ? classNode.name : object.initType;
                     currentFrame.pushStack(new Value(type, desc));
@@ -1012,8 +993,8 @@ public class MethodAnalyzer {
 
             }
             List<TryCatchBlockNode> handler = handlers.get(now);
-            if (handler != null) {
-                for (TryCatchBlockNode tcbn : handler) {
+            if (handler != null)
+                for (TryCatchBlockNode tcbn : handler)
                     if (jumped.add(new AbstractMap.SimpleEntry<>(now, tcbn.handler))) {
                         List<StackObject> newStack = new ArrayList<>();
                         newStack.add(0, new StackObject(new ArgumentFrame(-1, -1), tcbn.type == null ? "java/lang/Throwable" : tcbn.type));
@@ -1021,25 +1002,20 @@ public class MethodAnalyzer {
                         newLocals.addAll(locals);
                         execute(classNode, method, tcbn.handler, newStack, newLocals, handlers, result, jumped);
                     }
-                }
-            }
-            if (done) {
+
+            if (done)
                 return;
-            }
+
             if (!successors.isEmpty()) {
-                for (AbstractInsnNode successor : successors) {
+                for (AbstractInsnNode successor : successors)
                     if (jumped.add(new AbstractMap.SimpleEntry<>(now, successor))) {
-                        List<StackObject> newStack = new ArrayList<>();
-                        newStack.addAll(stack);
-                        List<StackObject> newLocals = new ArrayList<>();
-                        newLocals.addAll(locals);
+                        List<StackObject> newStack = new ArrayList<>(stack);
+                        List<StackObject> newLocals = new ArrayList<>(locals);
                         execute(classNode, method, successor, newStack, newLocals, handlers, result, jumped);
                     }
-                }
                 return;
-            } else {
+            } else
                 now = now.getNext();
-            }
         }
     }
 
@@ -1055,15 +1031,14 @@ public class MethodAnalyzer {
         }
 
         public StackObject(Class<?> type, Frame value, String desc) {
-            if (Primitives.unwrap(type) != type) {
+            if (Primitives.unwrap(type) != type)
                 throw new IllegalArgumentException();
-            }
+
             this.type = type;
             this.value = value;
             this.initType = desc;
-            if (type == Object.class && desc == null) {
+            if (type == Object.class && desc == null)
                 throw new IllegalArgumentException();
-            }
         }
 
         public StackObject(NewFrame frame) {
@@ -1071,9 +1046,8 @@ public class MethodAnalyzer {
             this.type = Object.class;
             this.initType = frame.getType();
             this.value = frame;
-            if (this.initType == null) {
+            if (this.initType == null)
                 throw new IllegalArgumentException("No inittype");
-            }
         }
 
         public StackObject(ArgumentFrame frame, String type) {
@@ -1082,9 +1056,8 @@ public class MethodAnalyzer {
             this.type = Object.class;
             this.value = frame;
             this.initType = type;
-            if (this.initType == null) {
+            if (this.initType == null)
                 throw new IllegalArgumentException("No inittype");
-            }
         }
 
         public void initialize() {

@@ -16,10 +16,9 @@
 
 package com.javadeobfuscator.deobfuscator.utils;
 
-import org.objectweb.asm.Opcodes;
-
 import java.util.HashMap;
 import java.util.Map;
+import org.objectweb.asm.Opcodes;
 
 public class PrimitiveUtils {
     private static final Map<String, Class<?>> nameToPrimitive = new HashMap<>();

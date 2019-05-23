@@ -16,23 +16,28 @@
 
 package com.javadeobfuscator.deobfuscator.executor.defined.types;
 
-import java.lang.reflect.Modifier;
-import java.util.*;
-import java.util.stream.Collectors;
-
 import com.javadeobfuscator.deobfuscator.exceptions.NoClassInPathException;
 import com.javadeobfuscator.deobfuscator.executor.Context;
+import com.javadeobfuscator.deobfuscator.utils.ClassTree;
+import com.javadeobfuscator.deobfuscator.utils.PrimitiveUtils;
+import com.javadeobfuscator.deobfuscator.utils.Utils;
+import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
-import com.javadeobfuscator.deobfuscator.utils.ClassTree;
-import com.javadeobfuscator.deobfuscator.utils.PrimitiveUtils;
-import com.javadeobfuscator.deobfuscator.utils.Utils;
 
 public class JavaClass {
-
     private final String name;
     private final Type type;
     private final ClassNode classNode;
@@ -40,9 +45,9 @@ public class JavaClass {
     private final boolean isPrimitive;
 
     public JavaClass(String name, Context context) {
-        if (name.contains("/")) {
+        if (name.contains("/"))
             name = name.replace('/', '.');
-        }
+
         this.name = name;
         this.context = context;
         String internalName = this.name.replace('.', '/');
@@ -50,9 +55,9 @@ public class JavaClass {
         if (primitive == null) {
             this.type = Type.getObjectType(internalName);
             Type elementType = this.type;
-            if (elementType.getSort() == Type.ARRAY) {
+            if (elementType.getSort() == Type.ARRAY)
                 elementType = elementType.getElementType();
-            }
+
             primitive = PrimitiveUtils.getPrimitiveByName(elementType.getClassName());
             if (primitive == null) {
                 this.classNode = context.dictionary.get(elementType.getInternalName());
@@ -84,9 +89,9 @@ public class JavaClass {
 
     public ClassNode assureLoaded(String ref) {
         ClassNode clazz = context.dictionary.get(ref);
-        if (clazz == null) {
+        if (clazz == null)
             throw new IllegalArgumentException("No class in path " + ref);
-        }
+
         return clazz;
     }
 
@@ -101,9 +106,8 @@ public class JavaClass {
     }
 
     public List<ClassNode> loadHierachy(ClassNode specificNode) {
-        if (specificNode.name.equals("java/lang/Object")) {
+        if (specificNode.name.equals("java/lang/Object"))
             return Collections.emptyList();
-        }
         if ((specificNode.access & Opcodes.ACC_INTERFACE) != 0) {
             getClassTree(specificNode.name).parentClasses.add("java/lang/Object");
             return Collections.emptyList();
@@ -112,9 +116,9 @@ public class JavaClass {
 
         ClassTree thisTree = getClassTree(specificNode.name);
         ClassNode superClass = assureLoaded(specificNode.superName);
-        if (superClass == null) {
+        if (superClass == null)
             throw new IllegalArgumentException("Could not load " + specificNode.name);
-        }
+
         ClassTree superTree = getClassTree(superClass.name);
         superTree.subClasses.add(specificNode.name);
         thisTree.parentClasses.add(superClass.name);
@@ -122,9 +126,9 @@ public class JavaClass {
 
         for (String interfaceReference : specificNode.interfaces) {
             ClassNode interfaceNode = assureLoaded(interfaceReference);
-            if (interfaceNode == null) {
+            if (interfaceNode == null)
                 throw new IllegalArgumentException("Could not load " + interfaceReference);
-            }
+
             ClassTree interfaceTree = getClassTree(interfaceReference);
             interfaceTree.subClasses.add(specificNode.name);
             thisTree.parentClasses.add(interfaceReference);
@@ -136,15 +140,14 @@ public class JavaClass {
     private boolean isAssignableFrom(String type1, String type2) {
         if (type1.equals("java/lang/Object"))
             return true;
-        if (type1.equals(type2)) {
+        if (type1.equals(type2))
             return true;
-        }
+
         assureLoaded(type1);
         assureLoaded(type2);
         ClassTree firstTree = getClassTree(type1);
         Set<String> allChilds1 = new HashSet<>();
-        LinkedList<String> toProcess = new LinkedList<>();
-        toProcess.addAll(firstTree.subClasses);
+        LinkedList<String> toProcess = new LinkedList<>(firstTree.subClasses);
         while (!toProcess.isEmpty()) {
             String s = toProcess.poll();
             if (allChilds1.add(s)) {
@@ -153,17 +156,15 @@ public class JavaClass {
                 toProcess.addAll(tempTree.subClasses);
             }
         }
-        if (allChilds1.contains(type2)) {
-            return true;
-        }
-        return false;
+
+        return allChilds1.contains(type2);
     }
 
     public JavaMethod getDeclaredMethod(String name, JavaClass[] clazz) {
         StringBuilder descBuilder = new StringBuilder("(");
-        for (JavaClass javaClass : clazz) {
+        for (JavaClass javaClass : clazz)
             descBuilder.append(javaClass.type.getDescriptor());
-        }
+
         descBuilder.append(")");
         String desc = descBuilder.toString();
 
@@ -173,79 +174,73 @@ public class JavaClass {
             return null;
         } else if (possibleMethods.size() > 1) {
             List<Type> returnTypes = new ArrayList<>();
-            for (MethodNode m : possibleMethods) {
+            for (MethodNode m : possibleMethods)
                 returnTypes.add(Type.getReturnType(m.desc));
-            }
-            Collections.sort(returnTypes, (o1, o2) -> {
+
+            returnTypes.sort(((o1, o2) -> {
                 String s1 = o1.getInternalName();
                 String s2 = o2.getInternalName();
-                if (isAssignableFrom(s1, s2)) {
+                if (isAssignableFrom(s1, s2))
                     return 1;
-                } else if (isAssignableFrom(s2, s1)) {
+                else if (isAssignableFrom(s2, s1))
                     return -1;
-                }
+
                 return 0;
-            });
+            }));
             MethodNode target = possibleMethods.stream().filter(mn -> mn.desc.endsWith(returnTypes.get(0).getDescriptor())).findFirst().orElse(null);
             return new JavaMethod(this, target);
-        } else {
+        } else
             return new JavaMethod(this, possibleMethods.get(0));
-        }
     }
 
     public JavaMethod getMethod(String name, JavaClass[] clazz) {
         StringBuilder descBuilder = new StringBuilder("(");
-        for (JavaClass javaClass : clazz) {
+        for (JavaClass javaClass : clazz)
             descBuilder.append(javaClass.type.getDescriptor());
-        }
+
         descBuilder.append(")");
         String desc = descBuilder.toString();
 
         List<MethodNode> possibleMethods = new ArrayList<>();
         ClassNode node = this.classNode;
-        while(true)
-        {
-	        for (MethodNode methodNode : node.methods) {
-	        	if(!methodNode.name.startsWith("<") && Modifier.isPublic(methodNode.access))
-	        		possibleMethods.add(methodNode);
-	        }
-	        if(node.superName == null)
-	        	break;
-	        node = new JavaClass(node.superName, context).classNode;
+        while (true) {
+            for (MethodNode methodNode : node.methods) {
+                if (!methodNode.name.startsWith("<") && Modifier.isPublic(methodNode.access))
+                    possibleMethods.add(methodNode);
+            }
+            if (node.superName == null)
+                break;
+            node = new JavaClass(node.superName, context).classNode;
         }
         possibleMethods = possibleMethods.stream().filter(methodNode -> methodNode.name.equals(name) && methodNode.desc.startsWith(desc)).collect(Collectors.toList());
         //Removes abstract methods
-        Iterator<MethodNode> itr = possibleMethods.iterator();
-        while(itr.hasNext())
-        {
-        	if(Modifier.isAbstract(itr.next().access))
-        		itr.remove();
-        }
+        possibleMethods.removeIf(mn -> Modifier.isAbstract(mn.access));
+
         if (possibleMethods.size() == 0) {
             Utils.sneakyThrow(new NoSuchMethodException(this.name + " " + name + desc));
             return null;
         } else if (possibleMethods.size() > 1) {
             List<Type> returnTypes = new ArrayList<>();
-            for (MethodNode m : possibleMethods) {
+            for (MethodNode m : possibleMethods)
                 returnTypes.add(Type.getReturnType(m.desc));
-            }
-            Collections.sort(returnTypes, (o1, o2) -> {
+
+            returnTypes.sort(((o1, o2) -> {
                 String s1 = o1.getInternalName();
                 String s2 = o2.getInternalName();
-                if (isAssignableFrom(s1, s2)) {
+                if (isAssignableFrom(s1, s2))
                     return 1;
-                } else if (isAssignableFrom(s2, s1)) {
+                else if (isAssignableFrom(s2, s1))
                     return -1;
-                }
+
                 return 0;
-            });
+            }));
             MethodNode target = possibleMethods.stream().filter(mn -> mn.desc.endsWith(returnTypes.get(0).getDescriptor())).findFirst().orElse(null);
             return new JavaMethod(this, target);
-        } else {
+        } else
             return new JavaMethod(this, possibleMethods.get(0));
-        }
+
     }
-    
+
     public Type getType() {
         return this.type;
     }
@@ -256,114 +251,106 @@ public class JavaClass {
 
     public JavaMethod[] getDeclaredMethods() {
         List<JavaMethod> methods = new ArrayList<>();
-        for (MethodNode methodNode : this.classNode.methods) {
-            if (!methodNode.name.startsWith("<")) {
+        for (MethodNode methodNode : this.classNode.methods)
+            if (!methodNode.name.startsWith("<"))
                 methods.add(new JavaMethod(this, methodNode));
-            }
-        }
-        return methods.toArray(new JavaMethod[methods.size()]);
+
+        return methods.toArray(new JavaMethod[0]);
     }
 
     public JavaMethod[] getMethods() {
         List<JavaMethod> methods = new ArrayList<>();
         ClassNode node = this.classNode;
-        while(true)
-        {
-	        for (MethodNode methodNode : node.methods) {
-	        	if(!methodNode.name.startsWith("<") && Modifier.isPublic(methodNode.access))
-	        		methods.add(new JavaMethod(this, methodNode));
-	        }
-	        if(node.superName == null)
-	        	break;
-	        node = new JavaClass(node.superName, context).classNode;
+        while (true) {
+            for (MethodNode methodNode : node.methods) {
+                if (!methodNode.name.startsWith("<") && Modifier.isPublic(methodNode.access))
+                    methods.add(new JavaMethod(this, methodNode));
+            }
+            if (node.superName == null)
+                break;
+            node = new JavaClass(node.superName, context).classNode;
         }
-        return methods.toArray(new JavaMethod[methods.size()]);
+        return methods.toArray(new JavaMethod[0]);
     }
-    
-    public JavaConstructor[] getDeclaredConstructors()
-    {
-    	List<JavaConstructor> methods = new ArrayList<>();
-    	for(MethodNode methodNode : classNode.methods)
-    		if(methodNode.name.equals("<init>"))
-    			methods.add(new JavaConstructor(this, methodNode.desc));
-    	return methods.toArray(new JavaConstructor[methods.size()]);
+
+    public JavaConstructor[] getDeclaredConstructors() {
+        List<JavaConstructor> methods = new ArrayList<>();
+        for (MethodNode methodNode : classNode.methods)
+            if (methodNode.name.equals("<init>"))
+                methods.add(new JavaConstructor(this, methodNode.desc));
+        return methods.toArray(new JavaConstructor[0]);
     }
-    
-    public JavaConstructor[] getConstructors()
-    {
-    	List<JavaConstructor> methods = new ArrayList<>();
-    	ClassNode node = this.classNode;
-        while(true)
-        {
-        	for(MethodNode methodNode : classNode.methods)
-        		if(methodNode.name.equals("<init>") && Modifier.isPublic(methodNode.access))
-        			methods.add(new JavaConstructor(this, methodNode.desc));
-	        if(node.superName == null)
-	        	break;
-	        node = new JavaClass(node.superName, context).classNode;
+
+    public JavaConstructor[] getConstructors() {
+        List<JavaConstructor> methods = new ArrayList<>();
+        ClassNode node = this.classNode;
+        while (true) {
+            for (MethodNode methodNode : classNode.methods)
+                if (methodNode.name.equals("<init>") && Modifier.isPublic(methodNode.access))
+                    methods.add(new JavaConstructor(this, methodNode.desc));
+            if (node.superName == null)
+                break;
+            node = new JavaClass(node.superName, context).classNode;
         }
-    	return methods.toArray(new JavaConstructor[methods.size()]);
+        return methods.toArray(new JavaConstructor[0]);
     }
-    
+
     public JavaConstructor getDeclaredConstructor(JavaClass[] clazz) {
         StringBuilder descBuilder = new StringBuilder("(");
-        for (JavaClass javaClass : clazz) {
+        for (JavaClass javaClass : clazz)
             descBuilder.append(javaClass.type.getDescriptor());
-        }
+
         descBuilder.append(")");
         String desc = descBuilder.toString();
 
-        List<MethodNode> possibleMethods = classNode.methods.stream().filter(methodNode -> methodNode.name.equals("<init>")  && methodNode.desc.startsWith(desc)).collect(Collectors.toList());
+        List<MethodNode> possibleMethods = classNode.methods.stream().filter(methodNode -> methodNode.name.equals("<init>") && methodNode.desc.startsWith(desc)).collect(Collectors.toList());
         if (possibleMethods.size() == 0) {
             Utils.sneakyThrow(new NoSuchMethodException(this.name + " " + name + desc));
             return null;
-        } else {
+        } else
             return new JavaConstructor(this, possibleMethods.get(0).desc);
-        }
     }
 
     public JavaConstructor getConstructor(JavaClass[] clazz) {
         StringBuilder descBuilder = new StringBuilder("(");
-        for (JavaClass javaClass : clazz) {
+        for (JavaClass javaClass : clazz)
             descBuilder.append(javaClass.type.getDescriptor());
-        }
+
         descBuilder.append(")");
         String desc = descBuilder.toString();
 
-        List<MethodNode> possibleMethods = classNode.methods.stream().filter(methodNode -> 
-        Modifier.isPublic(methodNode.access) && methodNode.name.equals("<init>")  && methodNode.desc.startsWith(desc)).collect(Collectors.toList());
+        List<MethodNode> possibleMethods = classNode.methods.stream().filter(methodNode ->
+                Modifier.isPublic(methodNode.access) && methodNode.name.equals("<init>") && methodNode.desc.startsWith(desc)).collect(Collectors.toList());
         if (possibleMethods.size() == 0) {
             Utils.sneakyThrow(new NoSuchMethodException(this.name + " " + name + desc));
             return null;
-        } else {
+        } else
             return new JavaConstructor(this, possibleMethods.get(0).desc);
-        }
     }
-    
+
     public JavaField[] getDeclaredFields() {
         List<JavaField> fields = new ArrayList<>();
         for (FieldNode fieldNode : this.classNode.fields) {
             fields.add(new JavaField(this, fieldNode));
         }
-        return fields.toArray(new JavaField[fields.size()]);
+        return fields.toArray(new JavaField[0]);
     }
-    
+
     public JavaField[] getFields() {
         List<JavaField> fields = new ArrayList<>();
         ClassNode node = this.classNode;
-        while(true)
-        {
-	        for (FieldNode fieldNode : node.fields) {
-	        	if(Modifier.isPublic(fieldNode.access))
-	        		fields.add(new JavaField(this, fieldNode));
-	        }
-	        if(node.superName == null)
-	        	break;
-	        node = new JavaClass(node.superName, context).classNode;
+        while (true) {
+            for (FieldNode fieldNode : node.fields) {
+                if (Modifier.isPublic(fieldNode.access))
+                    fields.add(new JavaField(this, fieldNode));
+            }
+            if (node.superName == null)
+                break;
+            node = new JavaClass(node.superName, context).classNode;
         }
-        return fields.toArray(new JavaField[fields.size()]);
+        return fields.toArray(new JavaField[0]);
     }
-    
+
     public JavaField getDeclaredField(String fieldName) {
         for (FieldNode fieldNode : this.classNode.fields) {
             if (fieldNode.name.equals(fieldName))
@@ -375,27 +362,25 @@ public class JavaClass {
 
     public JavaField getField(String fieldName) {
         ClassNode node = this.classNode;
-        while(true)
-        {
-	        for (FieldNode fieldNode : node.fields) {
-	        	if(Modifier.isPublic(fieldNode.access) && fieldNode.name.equals(fieldName))
-	        		return new JavaField(this, fieldNode);
-	        }
-	        if(node.superName == null)
-	        	break;
-	        node = new JavaClass(node.superName, context).classNode;
+        while (true) {
+            for (FieldNode fieldNode : node.fields) {
+                if (Modifier.isPublic(fieldNode.access) && fieldNode.name.equals(fieldName))
+                    return new JavaField(this, fieldNode);
+            }
+            if (node.superName == null)
+                break;
+            node = new JavaClass(node.superName, context).classNode;
         }
         Utils.sneakyThrow(new NoSuchFieldException(fieldName));
         return null;
     }
-    
+
     public JavaClass getSuperclass() {
-        if (this.type.getSort() == Type.ARRAY) {
+        if (this.type.getSort() == Type.ARRAY)
             return new JavaClass("java/lang/Object", this.context);
-        }
-        if (this.classNode.name.equals("java/lang/Object")) {
+        if (this.classNode.name.equals("java/lang/Object"))
             return null;
-        }
+
         return new JavaClass(this.classNode.superName, this.context);
     }
 
@@ -409,10 +394,10 @@ public class JavaClass {
 
     public JavaClass[] getInterfaces() {
         List<JavaClass> interfaces = new ArrayList<>();
-        for (String intf : this.classNode.interfaces) {
+        for (String intf : this.classNode.interfaces)
             interfaces.add(new JavaClass(intf, this.context));
-        }
-        return interfaces.toArray(new JavaClass[interfaces.size()]);
+
+        return interfaces.toArray(new JavaClass[0]);
     }
 
     @Override
@@ -450,13 +435,10 @@ public class JavaClass {
         //                return false;
         //        } else if (!name.equals(other.name))
         //            return false;
-        if (type == null) {
-            if (other.type != null)
-                return false;
-        } else if (!type.equals(other.type)) {
-            return false;
-        }
-        return true;
+        if (type == null)
+            return other.type == null;
+
+        return type.equals(other.type);
     }
 
     public ClassNode getClassNode() {

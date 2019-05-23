@@ -25,25 +25,30 @@ import com.javadeobfuscator.javavm.VirtualMachine;
 import com.javadeobfuscator.javavm.mirrors.JavaClass;
 import com.javadeobfuscator.javavm.utils.ArrayConversionHelper;
 import com.javadeobfuscator.javavm.values.JavaWrapper;
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.tree.*;
-
-import java.io.File;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.InsnNode;
+import org.objectweb.asm.tree.IntInsnNode;
+import org.objectweb.asm.tree.JumpInsnNode;
+import org.objectweb.asm.tree.LabelNode;
+import org.objectweb.asm.tree.LdcInsnNode;
+import org.objectweb.asm.tree.MethodInsnNode;
+import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.TypeInsnNode;
+import org.objectweb.asm.tree.VarInsnNode;
 
 public class ResourceEncryptionTransformer extends Transformer<TransformerConfig> implements Opcodes {
 
     @Override
     public boolean transform() throws Throwable {
         Set<String> decryptionClassnodes = new ResourceEncryptionClassFinder().findNames(classes.values());
-        if (decryptionClassnodes.size() == 0) {
+        if (decryptionClassnodes.size() == 0)
             return false;
-        }
-        if (decryptionClassnodes.size() > 1) {
+        if (decryptionClassnodes.size() > 1)
             throw new RuntimeException("Did not expect more than one decryptor. Please provide this sample on GitHub");
-        }
 
         VirtualMachine vm = TransformerHelper.newVirtualMachine(this);
 
@@ -61,10 +66,9 @@ public class ResourceEncryptionTransformer extends Transformer<TransformerConfig
 
             JavaWrapper wrappedInputStream = decryptorInputStream.asObject().getField("in", "Ljava/io/InputStream;"); // decryptorInputStream instanceof FilterInputStream
 
-            if (wrappedInputStream.getJavaClass() == pushBackInputStream) {
+            if (wrappedInputStream.getJavaClass() == pushBackInputStream)
                 // not an encrypted resource
                 continue;
-            }
 
             logger.debug("Decrypting {}", passthrough.getKey());
 

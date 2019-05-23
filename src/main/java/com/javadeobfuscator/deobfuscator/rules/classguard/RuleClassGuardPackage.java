@@ -16,13 +16,13 @@
 
 package com.javadeobfuscator.deobfuscator.rules.classguard;
 
-import com.javadeobfuscator.deobfuscator.*;
-import com.javadeobfuscator.deobfuscator.rules.*;
-import com.javadeobfuscator.deobfuscator.transformers.*;
-import com.javadeobfuscator.deobfuscator.transformers.classguard.*;
-import org.objectweb.asm.tree.*;
-
-import java.util.*;
+import com.javadeobfuscator.deobfuscator.Deobfuscator;
+import com.javadeobfuscator.deobfuscator.rules.Rule;
+import com.javadeobfuscator.deobfuscator.transformers.Transformer;
+import com.javadeobfuscator.deobfuscator.transformers.classguard.EncryptionTransformer;
+import java.util.Collection;
+import java.util.Collections;
+import org.objectweb.asm.tree.ClassNode;
 
 public class RuleClassGuardPackage implements Rule {
     @Override
@@ -32,11 +32,10 @@ public class RuleClassGuardPackage implements Rule {
 
     @Override
     public String test(Deobfuscator deobfuscator) {
-        for (ClassNode classNode : deobfuscator.getClasses().values()) {
-            if (classNode.name.startsWith("com/zenofx/")) {
+        for (ClassNode classNode : deobfuscator.getClasses().values())
+            if (classNode.name.startsWith("com/zenofx/"))
                 return "Found classnode " + classNode.name;
-            }
-        }
+
         return null;
     }
 

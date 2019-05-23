@@ -16,9 +16,10 @@
 
 package com.javadeobfuscator.deobfuscator.executor.defined.types;
 
+import com.javadeobfuscator.deobfuscator.utils.PrimitiveUtils;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.FieldNode;
-import com.javadeobfuscator.deobfuscator.utils.PrimitiveUtils;
 
 public class JavaField {
     private final JavaClass clazz;
@@ -48,11 +49,10 @@ public class JavaField {
     public JavaClass getType() {
         Type type = Type.getType(field.desc);
         Class<?> primitive = PrimitiveUtils.getPrimitiveByName(type.getClassName());
-        if (primitive != null) {
+        if (primitive != null)
             return new JavaClass(type.getClassName(), clazz.getContext());
-        } else {
+        else
             return new JavaClass(type.getInternalName(), clazz.getContext());
-        }
     }
 
     public void setAccessible(boolean accessible) {
@@ -97,11 +97,13 @@ public class JavaField {
                 return false;
         } else if (!clazz.equals(other.clazz))
             return false;
-        if (field == null) {
-            if (other.field != null)
-                return false;
-        } else if (!field.equals(other.field))
-            return false;
-        return true;
+        if (field == null)
+            return other.field == null;
+
+        return field.equals(other.field);
+    }
+
+    public boolean isStatic() {
+        return (field.access & Opcodes.ACC_STATIC) != 0;
     }
 }

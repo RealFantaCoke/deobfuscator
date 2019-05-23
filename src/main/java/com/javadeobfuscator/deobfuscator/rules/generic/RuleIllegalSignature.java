@@ -16,14 +16,16 @@
 
 package com.javadeobfuscator.deobfuscator.rules.generic;
 
-import com.javadeobfuscator.deobfuscator.*;
-import com.javadeobfuscator.deobfuscator.rules.*;
-import com.javadeobfuscator.deobfuscator.transformers.*;
-import com.javadeobfuscator.deobfuscator.transformers.general.removers.*;
-import org.objectweb.asm.tree.*;
-import org.objectweb.asm.util.*;
-
-import java.util.*;
+import com.javadeobfuscator.deobfuscator.Deobfuscator;
+import com.javadeobfuscator.deobfuscator.rules.Rule;
+import com.javadeobfuscator.deobfuscator.transformers.Transformer;
+import com.javadeobfuscator.deobfuscator.transformers.general.removers.IllegalSignatureRemover;
+import java.util.Collection;
+import java.util.Collections;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.FieldNode;
+import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.util.CheckClassAdapter;
 
 public class RuleIllegalSignature implements Rule {
     @Override
@@ -34,31 +36,26 @@ public class RuleIllegalSignature implements Rule {
     @Override
     public String test(Deobfuscator deobfuscator) {
         for (ClassNode classNode : deobfuscator.getClasses().values()) {
-            if (classNode.signature != null) {
+            if (classNode.signature != null)
                 try {
                     CheckClassAdapter.checkClassSignature(classNode.signature);
                 } catch (IllegalArgumentException ignored) {
                     return "Found illegal class signature for " + classNode.name;
                 }
-            }
-            for (MethodNode methodNode : classNode.methods) {
-                if (methodNode.signature != null) {
+            for (MethodNode methodNode : classNode.methods)
+                if (methodNode.signature != null)
                     try {
                         CheckClassAdapter.checkMethodSignature(methodNode.signature);
                     } catch (IllegalArgumentException ignored) {
                         return "Found illegal method signature for " + classNode.name + " " + methodNode.name + methodNode.desc;
                     }
-                }
-            }
-            for (FieldNode fieldNode : classNode.fields) {
-                if (fieldNode.signature != null) {
+            for (FieldNode fieldNode : classNode.fields)
+                if (fieldNode.signature != null)
                     try {
                         CheckClassAdapter.checkFieldSignature(fieldNode.signature);
                     } catch (IllegalArgumentException ignored) {
                         return "Found illegal field signature for " + classNode.name + " " + fieldNode.name + fieldNode.desc;
                     }
-                }
-            }
         }
         return null;
     }

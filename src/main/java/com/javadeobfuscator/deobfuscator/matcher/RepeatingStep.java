@@ -37,11 +37,11 @@ public class RepeatingStep implements Step {
             AbstractInsnNode next;
             while (true) {
                 next = step.tryMatch(matcher, now);
-                if (next == null) {
+                if (next == null)
                     break;
-                } else {
+                else
                     now = next;
-                }
+
                 amount++;
             }
             return (min == -1 || amount >= min) ? now : null;
@@ -52,9 +52,8 @@ public class RepeatingStep implements Step {
                 if (next == null) {
                     if (min != -1 && i >= min) return now;
                     return null;
-                } else {
+                } else
                     now = next;
-                }
             }
             return now;
         }

@@ -20,7 +20,6 @@ import com.javadeobfuscator.deobfuscator.utils.Utils;
 import org.objectweb.asm.tree.AbstractInsnNode;
 
 public class JavaAddress extends JavaValue {
-
     private final AbstractInsnNode value;
 
     public JavaAddress(AbstractInsnNode value) {

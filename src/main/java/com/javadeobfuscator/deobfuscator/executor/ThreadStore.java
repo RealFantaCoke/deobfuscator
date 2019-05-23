@@ -1,7 +1,6 @@
 package com.javadeobfuscator.deobfuscator.executor;
 
 import com.javadeobfuscator.deobfuscator.executor.defined.types.JavaThread;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;

@@ -16,16 +16,14 @@
 
 package com.javadeobfuscator.deobfuscator.executor.defined;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
-import com.javadeobfuscator.deobfuscator.asm.ConstantPool;
-import com.javadeobfuscator.deobfuscator.executor.MethodExecutor;
 import com.javadeobfuscator.deobfuscator.executor.Context;
+import com.javadeobfuscator.deobfuscator.executor.MethodExecutor;
 import com.javadeobfuscator.deobfuscator.executor.providers.MethodProvider;
 import com.javadeobfuscator.deobfuscator.executor.values.JavaObject;
 import com.javadeobfuscator.deobfuscator.executor.values.JavaValue;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 
@@ -42,9 +40,9 @@ public class DictionaryMethodProvider extends MethodProvider {
             MethodNode methodNode = classNode.methods.stream().filter(mn -> mn.name.equals(methodName) && mn.desc.equals(methodDesc)).findFirst().orElseGet(null);
             if (methodNode != null) {
                 List<JavaValue> argsClone = new ArrayList<>();
-                for (JavaValue arg : args) {
+                for (JavaValue arg : args)
                     argsClone.add(arg.copy());
-                }
+
                 return MethodExecutor.execute(classNode, methodNode, argsClone, targetObject == null ? new JavaObject(null, "java/lang/Object") : targetObject, context);
             }
         }

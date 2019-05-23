@@ -17,11 +17,10 @@
 package com.javadeobfuscator.deobfuscator.transformers.general.removers;
 
 import com.javadeobfuscator.deobfuscator.config.TransformerConfig;
+import com.javadeobfuscator.deobfuscator.transformers.Transformer;
+import java.util.Iterator;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.LineNumberNode;
-import com.javadeobfuscator.deobfuscator.transformers.Transformer;
-
-import java.util.Iterator;
 
 public class LineNumberRemover extends Transformer<TransformerConfig> {
     @Override
@@ -29,11 +28,8 @@ public class LineNumberRemover extends Transformer<TransformerConfig> {
         classNodes().forEach(classNode -> {
             classNode.methods.forEach(methodNode -> {
                 Iterator<AbstractInsnNode> it = methodNode.instructions.iterator();
-                while (it.hasNext()) {
-                    if (it.next() instanceof LineNumberNode) {
-                        it.remove();
-                    }
-                }
+                while (it.hasNext())
+                    if (it.next() instanceof LineNumberNode) it.remove();
             });
         });
 

@@ -17,9 +17,9 @@
 package com.javadeobfuscator.deobfuscator.transformers.general.removers;
 
 import com.javadeobfuscator.deobfuscator.config.TransformerConfig;
+import com.javadeobfuscator.deobfuscator.transformers.Transformer;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import com.javadeobfuscator.deobfuscator.transformers.Transformer;
 
 public class IllegalVarargsRemover extends Transformer<TransformerConfig> {
     @Override
@@ -27,9 +27,8 @@ public class IllegalVarargsRemover extends Transformer<TransformerConfig> {
         classNodes().forEach(classNode -> {
             classNode.methods.forEach(methodNode -> {
                 Type[] args = Type.getArgumentTypes(methodNode.desc);
-                if (args.length > 0 && args[args.length - 1].getSort() != Type.ARRAY) {
+                if (args.length > 0 && args[args.length - 1].getSort() != Type.ARRAY)
                     methodNode.access &= ~Opcodes.ACC_VARARGS;
-                }
             });
         });
         return true;

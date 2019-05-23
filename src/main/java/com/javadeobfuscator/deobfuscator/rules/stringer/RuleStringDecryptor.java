@@ -16,15 +16,16 @@
 
 package com.javadeobfuscator.deobfuscator.rules.stringer;
 
-import com.javadeobfuscator.deobfuscator.*;
-import com.javadeobfuscator.deobfuscator.rules.*;
-import com.javadeobfuscator.deobfuscator.transformers.*;
-import com.javadeobfuscator.deobfuscator.transformers.stringer.*;
-import com.javadeobfuscator.deobfuscator.utils.*;
-import org.objectweb.asm.*;
-import org.objectweb.asm.tree.*;
-
-import java.util.*;
+import com.javadeobfuscator.deobfuscator.Deobfuscator;
+import com.javadeobfuscator.deobfuscator.rules.Rule;
+import com.javadeobfuscator.deobfuscator.transformers.Transformer;
+import com.javadeobfuscator.deobfuscator.transformers.stringer.StringEncryptionTransformer;
+import com.javadeobfuscator.deobfuscator.utils.TransformerHelper;
+import java.util.Collection;
+import java.util.Collections;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.MethodNode;
 
 public class RuleStringDecryptor implements Rule, Opcodes {
     @Override
@@ -34,7 +35,7 @@ public class RuleStringDecryptor implements Rule, Opcodes {
 
     @Override
     public String test(Deobfuscator deobfuscator) {
-        for (ClassNode classNode : deobfuscator.getClasses().values()) {
+        for (ClassNode classNode : deobfuscator.getClasses().values())
             for (MethodNode methodNode : classNode.methods) {
                 if (!methodNode.desc.equals("(Ljava/lang/String;)Ljava/lang/String;")) continue;
 
@@ -47,13 +48,11 @@ public class RuleStringDecryptor implements Rule, Opcodes {
                 isStringer = isStringer && TransformerHelper.countOccurencesOf(methodNode, IUSHR) > 10;
                 isStringer = isStringer && TransformerHelper.countOccurencesOf(methodNode, ISHL) > 10;
 
-                if (!isStringer) {
+                if (!isStringer)
                     continue;
-                }
 
                 return "Found possible string decryption class " + classNode.name;
             }
-        }
 
         return null;
     }

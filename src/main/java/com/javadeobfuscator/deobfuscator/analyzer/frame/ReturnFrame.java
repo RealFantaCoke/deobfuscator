@@ -22,8 +22,7 @@ public class ReturnFrame extends Frame {
     public ReturnFrame(int opcode, Frame obj) {
         super(opcode);
         this.obj = obj;
-        if (this.obj != null) {
+        if (this.obj != null)
             this.obj.children.add(this);
-        }
     }
 }

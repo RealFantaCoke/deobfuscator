@@ -20,16 +20,19 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.javadeobfuscator.deobfuscator.transformers.DelegatingTransformer;
 import com.javadeobfuscator.deobfuscator.transformers.Transformer;
-import org.slf4j.Logger;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import org.slf4j.Logger;
 
 public class TransformerConfigDeserializer extends JsonDeserializer<TransformerConfig> {
 
@@ -56,20 +59,19 @@ public class TransformerConfigDeserializer extends JsonDeserializer<TransformerC
                 configs.add(mapper.readerForUpdating(config).readValue(field.getValue()));
             }
 
-            if (configs.size() == 0) {
+            if (configs.size() == 0)
                 throw new IllegalArgumentException("didn't see that coming " + node);
-            } else if (configs.size() == 1) {
+            else if (configs.size() == 1)
                 return configs.get(0);
-            } else {
+            else {
                 DelegatingTransformer.Config config = new DelegatingTransformer.Config();
                 config.setConfigs(configs);
                 return config;
             }
-        } else if (node.isTextual()) {
+        } else if (node.isTextual())
             return getById(p, ctxt, node.asText());
-        } else {
+        else
             throw ctxt.wrongTokenException(p, String.class, JsonToken.VALUE_STRING, null);
-        }
     }
 
     private TransformerConfig getById(JsonParser p, DeserializationContext ctxt, String id) throws JsonMappingException {
@@ -78,25 +80,21 @@ public class TransformerConfigDeserializer extends JsonDeserializer<TransformerC
             clazz = Class.forName("com.javadeobfuscator.deobfuscator.transformers." + id);
         } catch (ClassNotFoundException ignored) {
         }
-        if (clazz == null) {
+        if (clazz == null)
             try {
                 clazz = Class.forName(id);
             } catch (ClassNotFoundException ignored) {
             }
-        }
 
-        if (clazz == DelegatingTransformer.class) {
+        if (clazz == DelegatingTransformer.class)
             throw ctxt.weirdStringException(id, Transformer.class, "Cannot explicitly request DelegatingTransformer");
-        }
 
-        if (clazz != null) {
-            if (Transformer.class.isAssignableFrom(clazz)) {
+        if (clazz != null)
+            if (Transformer.class.isAssignableFrom(clazz))
                 return TransformerConfig.configFor(clazz.asSubclass(Transformer.class));
-            } else {
+            else
                 throw ctxt.weirdStringException(id, Transformer.class, "Class does not extend com.javadeobfuscator.deobfuscator.transformers.Transformer");
-            }
-        } else {
+        else
             throw ctxt.weirdStringException(id, Transformer.class, "Could not locate specified transformer");
-        }
     }
 }

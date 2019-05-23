@@ -44,15 +44,16 @@ public class JavaObject extends JavaValue {
     }
 
     public void initialize(Object value) {
-    	if(patchClasses.containsKey(type))
-    		this.value = patchClasses.get(type).apply(value);
-    	else
-    		this.value = value;
+        if (patchClasses.containsKey(type))
+            this.value = patchClasses.get(type).apply(value);
+        else
+            this.value = value;
     }
 
     public String type() {
         return this.type;
     }
+
     public String toString() {
         return "JavaObject@" + Integer.toHexString(System.identityHashCode(this)) + "(value=" + value + ", type=" + type + ")";
     }

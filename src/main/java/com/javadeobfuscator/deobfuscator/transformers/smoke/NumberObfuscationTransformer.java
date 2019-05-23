@@ -6,11 +6,8 @@ import com.javadeobfuscator.deobfuscator.analyzer.frame.Frame;
 import com.javadeobfuscator.deobfuscator.analyzer.frame.LdcFrame;
 import com.javadeobfuscator.deobfuscator.analyzer.frame.MathFrame;
 import com.javadeobfuscator.deobfuscator.config.TransformerConfig;
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.tree.*;
 import com.javadeobfuscator.deobfuscator.transformers.Transformer;
 import com.javadeobfuscator.deobfuscator.utils.Utils;
-
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -18,21 +15,26 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-
-import static org.objectweb.asm.Opcodes.*;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.InsnList;
+import org.objectweb.asm.tree.InsnNode;
+import org.objectweb.asm.tree.JumpInsnNode;
+import org.objectweb.asm.tree.LdcInsnNode;
+import org.objectweb.asm.tree.MethodInsnNode;
 
 public class NumberObfuscationTransformer extends Transformer<TransformerConfig> {
 
     @Override
     public boolean transform() throws Throwable {
-        for (int i = 0; i < 2; i++) {
+        for (int i = 0; i < 2; i++)
             transform0();
-        }
+
         return true;
     }
 
-    private void transform0() throws Throwable {
-        AtomicInteger count = new AtomicInteger(0);
+    private void transform0() {
+        AtomicInteger count = new AtomicInteger();
         Map<String, Integer> numberMethods = new HashMap<>();
 
         System.out.println("[Smoke] [NumberObfuscationTransformer] Starting");
@@ -107,17 +109,13 @@ public class NumberObfuscationTransformer extends Transformer<TransformerConfig>
 
                         if (Modifier.isStatic(methodNode.access) && methodNode.desc.endsWith("()I")) {
                             int returnCount = Arrays.stream(methodNode.instructions.toArray()).filter(insn -> insn.getOpcode() == Opcodes.IRETURN).collect(Collectors.toList()).size();
-                            if (returnCount == 1) {
-                                for (AbstractInsnNode insn = methodNode.instructions.getFirst(); insn != null; insn = insn.getNext()) {
-                                    if (insn.getOpcode() == Opcodes.IRETURN) {
-                                        if (insn.getPrevious() instanceof LdcInsnNode) {
+                            if (returnCount == 1)
+                                for (AbstractInsnNode insn = methodNode.instructions.getFirst(); insn != null; insn = insn.getNext())
+                                    if (insn.getOpcode() == Opcodes.IRETURN)
+                                        if (insn.getPrevious() instanceof LdcInsnNode)
                                             numberMethods.put(classNode.name + methodNode.name + methodNode.desc, (int) ((LdcInsnNode) insn.getPrevious()).cst);
-                                        } else if (insn.getPrevious().getOpcode() == Opcodes.ICONST_1 || insn.getPrevious().getOpcode() == Opcodes.ICONST_0) {
+                                        else if (insn.getPrevious().getOpcode() == Opcodes.ICONST_1 || insn.getPrevious().getOpcode() == Opcodes.ICONST_0)
                                             numberMethods.put(classNode.name + methodNode.name + methodNode.desc, insn.getPrevious().getOpcode() - 3);
-                                        }
-                                    }
-                                }
-                            }
                         }
                     }
                 }));

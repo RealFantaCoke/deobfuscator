@@ -2,7 +2,6 @@ package com.javadeobfuscator.deobfuscator.transformers.smoke;
 
 import com.javadeobfuscator.deobfuscator.config.TransformerConfig;
 import com.javadeobfuscator.deobfuscator.transformers.Transformer;
-
 import java.util.stream.Collectors;
 
 public class IllegalVariableTransformer extends Transformer<TransformerConfig> {

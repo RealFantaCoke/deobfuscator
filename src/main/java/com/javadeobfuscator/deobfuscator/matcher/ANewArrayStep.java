@@ -32,15 +32,13 @@ public class ANewArrayStep implements Step {
 
     @Override
     public AbstractInsnNode tryMatch(InstructionMatcher matcher, AbstractInsnNode now) {
-        if (now.getOpcode() != Opcodes.ANEWARRAY) {
+        if (now.getOpcode() != Opcodes.ANEWARRAY)
             return null;
-        }
 
         TypeInsnNode typeInsnNode = (TypeInsnNode) now;
-        if (!(basic ? TransformerHelper.basicType(typeInsnNode.desc) : typeInsnNode.desc).equals(type)) {
+        if (!(basic ? TransformerHelper.basicType(typeInsnNode.desc) : typeInsnNode.desc).equals(type))
             return null;
-        }
-        
+
         return now.getNext();
     }
 }

@@ -53,11 +53,10 @@ public class Monitor {
             }
         }
 
-        if (notify) {
+        if (notify)
             synchronized (obj) {
                 obj.notifyAll();
             }
-        }
     }
 }
 

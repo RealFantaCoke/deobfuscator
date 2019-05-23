@@ -17,11 +17,14 @@
 package com.javadeobfuscator.deobfuscator.transformers.stringer.v3.utils;
 
 import com.javadeobfuscator.deobfuscator.transformers.MethodFinder;
+import java.lang.reflect.Modifier;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
-
-import java.lang.reflect.Modifier;
-import java.util.*;
 
 public class InvokedynamicMethodFinder implements MethodFinder {
     @Override
@@ -30,17 +33,14 @@ public class InvokedynamicMethodFinder implements MethodFinder {
 
         for (ClassNode classNode : classes) {
             Set<MethodNode> remove = new HashSet<>();
-            for (MethodNode methodNode : classNode.methods) {
+            for (MethodNode methodNode : classNode.methods)
                 if (Modifier.isPrivate(methodNode.access)
                         && Modifier.isStatic(methodNode.access)
                         && methodNode.desc.equals("(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;")
-                        && methodNode.name.length() == 2) {
+                        && methodNode.name.length() == 2)
                     remove.add(methodNode);
-                }
-            }
-            if (!remove.isEmpty()) {
+            if (!remove.isEmpty())
                 result.put(classNode, remove);
-            }
         }
 
         return result;

@@ -16,21 +16,29 @@
 
 package com.javadeobfuscator.deobfuscator.transformers.stringer.invokedynamic;
 
-import com.javadeobfuscator.deobfuscator.config.*;
-import com.javadeobfuscator.deobfuscator.exceptions.*;
-import com.javadeobfuscator.deobfuscator.transformers.*;
-import com.javadeobfuscator.deobfuscator.utils.*;
-import com.javadeobfuscator.javavm.*;
-import com.javadeobfuscator.javavm.exceptions.*;
-import com.javadeobfuscator.javavm.mirrors.*;
-import com.javadeobfuscator.javavm.nativeimpls.*;
-import com.javadeobfuscator.javavm.values.*;
-import org.objectweb.asm.*;
+import com.javadeobfuscator.deobfuscator.config.TransformerConfig;
+import com.javadeobfuscator.deobfuscator.exceptions.WrongTransformerException;
+import com.javadeobfuscator.deobfuscator.transformers.Transformer;
+import com.javadeobfuscator.deobfuscator.utils.InstructionModifier;
+import com.javadeobfuscator.deobfuscator.utils.TransformerHelper;
+import com.javadeobfuscator.javavm.VirtualMachine;
+import com.javadeobfuscator.javavm.exceptions.AbortException;
+import com.javadeobfuscator.javavm.exceptions.VMException;
+import com.javadeobfuscator.javavm.mirrors.JavaClass;
+import com.javadeobfuscator.javavm.nativeimpls.java_lang_Class;
+import com.javadeobfuscator.javavm.nativeimpls.java_lang_invoke_MethodType;
+import com.javadeobfuscator.javavm.values.JavaWrapper;
+import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.List;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.tree.*;
-
-import java.lang.reflect.*;
-import java.util.*;
+import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.InsnNode;
+import org.objectweb.asm.tree.InvokeDynamicInsnNode;
+import org.objectweb.asm.tree.MethodInsnNode;
+import org.objectweb.asm.tree.MethodNode;
 
 /**
  * This mode of Stringer's invokedynamic obfuscation generates a bootstrap method for each invokedynamic with the signature
@@ -43,11 +51,10 @@ public class Invokedynamic2Transformer extends Transformer<TransformerConfig> im
     public boolean transform() throws WrongTransformerException {
         VirtualMachine vm = TransformerHelper.newVirtualMachine(this);
 
-        for (ClassNode classNode : classes.values()) {
+        for (ClassNode classNode : classes.values())
             JavaClass.forName(vm, classNode.name).setInitializationState(JavaClass.InitializationState.INITIALIZED, null);
-        }
 
-        for (ClassNode classNode : classes.values()) {
+        for (ClassNode classNode : classes.values())
             for (MethodNode methodNode : new ArrayList<>(classNode.methods)) {
                 InstructionModifier modifier = new InstructionModifier();
 
@@ -63,9 +70,9 @@ public class Invokedynamic2Transformer extends Transformer<TransformerConfig> im
                     MethodNode decryptorMethod = new MethodNode(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, "Decrypt" + decryptorMethodCount++, "()Ljava/lang/", null, null);
 
                     Type[] argTypes = Type.getArgumentTypes(invokeDynamicInsnNode.desc);
-                    for (Type type : argTypes) {
+                    for (Type type : argTypes)
                         decryptorMethod.instructions.add(TransformerHelper.zero(type));
-                    }
+
                     decryptorMethod.instructions.add(invokeDynamicInsnNode.clone(null));
                     decryptorMethod.instructions.add(new InsnNode(RETURN));
 
@@ -73,13 +80,12 @@ public class Invokedynamic2Transformer extends Transformer<TransformerConfig> im
 
                     vm.beforeCallHooks.add(info -> {
                         if (info.getClassNode().name.equals("java/lang/invoke/MethodHandles$Lookup")
-                                && info.getMethodNode().desc.equals("(Ljava/lang/Class;Ljava/lang/String;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/MethodHandle;")) {
+                                && info.getMethodNode().desc.equals("(Ljava/lang/Class;Ljava/lang/String;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/MethodHandle;"))
                             // Make sure it's the BSM calling the find method and not the JVM
                             if (vm.getStacktrace().get(0).getClassNode() == classNode) {
                                 data.addAll(info.getParams());
                                 throw AbortException.INSTANCE;
                             }
-                        }
                     });
 
                     classNode.methods.add(decryptorMethod);
@@ -114,14 +120,13 @@ public class Invokedynamic2Transformer extends Transformer<TransformerConfig> im
                     }
 
                     int opcode;
-                    if (Modifier.isStatic(indyMethod.access)) {
+                    if (Modifier.isStatic(indyMethod.access))
                         opcode = INVOKESTATIC;
-                    } else {
-                        if (Modifier.isInterface(owner.getClassNode().access)) {
+                    else {
+                        if (Modifier.isInterface(owner.getClassNode().access))
                             opcode = INVOKEINTERFACE;
-                        } else {
+                        else
                             opcode = INVOKEVIRTUAL;
-                        }
                     }
 
                     modifier.replace(invokeDynamicInsnNode, new MethodInsnNode(opcode, owner.getClassNode().name, indyMethod.name, indyMethod.desc, opcode == INVOKEINTERFACE));
@@ -131,7 +136,6 @@ public class Invokedynamic2Transformer extends Transformer<TransformerConfig> im
 
                 modifier.apply(methodNode);
             }
-        }
 
         vm.shutdown();
         return false;

@@ -16,22 +16,18 @@
 
 package com.javadeobfuscator.deobfuscator.graph;
 
-import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.MethodNode;
-
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
+import org.objectweb.asm.tree.ClassNode;
 
 public class GraphHelper {
     public static Map<String, ClassNode> validateUniqueClasses(Collection<ClassNode> nodes) {
         Map<String, ClassNode> map = new HashMap<>();
-        for (ClassNode classNode : nodes) {
-            if (map.put(classNode.name, classNode) != null) {
+        for (ClassNode classNode : nodes)
+            if (map.put(classNode.name, classNode) != null)
                 throw new IllegalArgumentException("Duplicate class " + classNode.name);
-            }
-        }
+
         return map;
     }
 }

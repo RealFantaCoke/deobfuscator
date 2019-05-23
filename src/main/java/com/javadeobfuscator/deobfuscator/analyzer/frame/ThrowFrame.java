@@ -19,7 +19,6 @@ package com.javadeobfuscator.deobfuscator.analyzer.frame;
 import org.objectweb.asm.Opcodes;
 
 public class ThrowFrame extends Frame {
-
     private Frame throwable;
 
     public ThrowFrame(Frame throwable) {

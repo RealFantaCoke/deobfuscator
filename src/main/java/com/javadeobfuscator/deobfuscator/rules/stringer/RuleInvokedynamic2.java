@@ -16,16 +16,18 @@
 
 package com.javadeobfuscator.deobfuscator.rules.stringer;
 
-import com.javadeobfuscator.deobfuscator.*;
-import com.javadeobfuscator.deobfuscator.rules.*;
-import com.javadeobfuscator.deobfuscator.transformers.*;
-import com.javadeobfuscator.deobfuscator.transformers.stringer.invokedynamic.*;
-import com.javadeobfuscator.deobfuscator.utils.*;
-import org.objectweb.asm.*;
-import org.objectweb.asm.tree.*;
-
-import java.lang.reflect.*;
-import java.util.*;
+import com.javadeobfuscator.deobfuscator.Deobfuscator;
+import com.javadeobfuscator.deobfuscator.rules.Rule;
+import com.javadeobfuscator.deobfuscator.transformers.Transformer;
+import com.javadeobfuscator.deobfuscator.transformers.stringer.invokedynamic.Invokedynamic2Transformer;
+import com.javadeobfuscator.deobfuscator.utils.TransformerHelper;
+import java.lang.reflect.Modifier;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.MethodNode;
 
 public class RuleInvokedynamic2 implements Rule, Opcodes {
     @Override
@@ -40,9 +42,8 @@ public class RuleInvokedynamic2 implements Rule, Opcodes {
             List<MethodNode> bsms = TransformerHelper.findMethodNodes(classNode, null, Invokedynamic2Transformer.BSM_DESC, false);
 
             for (MethodNode bsm : bsms) {
-                if (!Modifier.isStatic(bsm.access)) {
+                if (!Modifier.isStatic(bsm.access))
                     continue;
-                }
 
                 boolean isBSM = true;
 
@@ -54,9 +55,8 @@ public class RuleInvokedynamic2 implements Rule, Opcodes {
                 isBSM = isBSM && TransformerHelper.countOccurencesOf(bsm, AASTORE) > 0;
                 isBSM = isBSM && TransformerHelper.countOccurencesOf(bsm, AALOAD) > 0;
 
-                if (isBSM) {
+                if (isBSM)
                     return "Found potential bootstrap method " + classNode.name + " " + bsm.name + bsm.desc;
-                }
             }
         }
 

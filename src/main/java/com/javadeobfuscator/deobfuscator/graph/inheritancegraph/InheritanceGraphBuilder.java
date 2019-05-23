@@ -16,9 +16,12 @@
 
 package com.javadeobfuscator.deobfuscator.graph.inheritancegraph;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.objectweb.asm.tree.ClassNode;
-
-import java.util.*;
 
 import static com.javadeobfuscator.deobfuscator.graph.GraphHelper.validateUniqueClasses;
 
@@ -59,14 +62,13 @@ public class InheritanceGraphBuilder {
                 }
             }
             {
-                if (classNode.interfaces != null) {
+                if (classNode.interfaces != null)
                     for (String intf : classNode.interfaces) {
                         InheritanceGraphNode intfClass = inheritanceGraph.computeIfAbsent(InheritanceGraph.getKey(intf), InheritanceGraphNode::new);
 
                         thisNode.addParent(intfClass);
                         intfClass.addChild(thisNode);
                     }
-                }
             }
         }
 

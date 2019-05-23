@@ -4,10 +4,9 @@ import com.javadeobfuscator.deobfuscator.executor.Context;
 import com.javadeobfuscator.deobfuscator.executor.MethodExecutor;
 import com.javadeobfuscator.deobfuscator.executor.ThreadStore;
 import com.javadeobfuscator.deobfuscator.executor.values.JavaObject;
+import java.util.Collections;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
-
-import java.util.Collections;
 
 public class JavaThread {
     private Thread thread;

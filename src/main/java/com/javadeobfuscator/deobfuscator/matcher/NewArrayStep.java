@@ -16,30 +16,27 @@
 
 package com.javadeobfuscator.deobfuscator.matcher;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.IntInsnNode;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class NewArrayStep implements Step {
     private final List<Integer> sorts;
 
     public NewArrayStep(int... sorts) {
         this.sorts = new ArrayList<>();
-        for (int sort : sorts) {
+        for (int sort : sorts)
             this.sorts.add(sort);
-        }
     }
 
     @Override
     public AbstractInsnNode tryMatch(InstructionMatcher matcher, AbstractInsnNode now) {
-        if (now.getOpcode() == Opcodes.NEWARRAY && now instanceof IntInsnNode) {
-            if (this.sorts.contains(((IntInsnNode) now).operand)) {
+        if (now.getOpcode() == Opcodes.NEWARRAY && now instanceof IntInsnNode)
+            if (this.sorts.contains(((IntInsnNode) now).operand))
                 return now.getNext();
-            }
-        }
+
         return null;
     }
 }

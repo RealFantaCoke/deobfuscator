@@ -16,24 +16,73 @@
 
 package com.javadeobfuscator.deobfuscator.utils;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-
-import static org.objectweb.asm.Opcodes.*;
-
 import org.apache.commons.io.IOUtils;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.tree.*;
+import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.FrameNode;
+import org.objectweb.asm.tree.InsnList;
+import org.objectweb.asm.tree.InsnNode;
+import org.objectweb.asm.tree.IntInsnNode;
+import org.objectweb.asm.tree.JumpInsnNode;
+import org.objectweb.asm.tree.LabelNode;
+import org.objectweb.asm.tree.LdcInsnNode;
+import org.objectweb.asm.tree.LineNumberNode;
+import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.util.Printer;
 import org.objectweb.asm.util.Textifier;
 import org.objectweb.asm.util.TraceMethodVisitor;
 import sun.misc.Unsafe;
+
+import static org.objectweb.asm.Opcodes.ACONST_NULL;
+import static org.objectweb.asm.Opcodes.ALOAD;
+import static org.objectweb.asm.Opcodes.ARETURN;
+import static org.objectweb.asm.Opcodes.ATHROW;
+import static org.objectweb.asm.Opcodes.BIPUSH;
+import static org.objectweb.asm.Opcodes.DLOAD;
+import static org.objectweb.asm.Opcodes.DRETURN;
+import static org.objectweb.asm.Opcodes.FCONST_0;
+import static org.objectweb.asm.Opcodes.FCONST_1;
+import static org.objectweb.asm.Opcodes.FCONST_2;
+import static org.objectweb.asm.Opcodes.FLOAD;
+import static org.objectweb.asm.Opcodes.FRETURN;
+import static org.objectweb.asm.Opcodes.GETSTATIC;
+import static org.objectweb.asm.Opcodes.GOTO;
+import static org.objectweb.asm.Opcodes.ICONST_0;
+import static org.objectweb.asm.Opcodes.ICONST_1;
+import static org.objectweb.asm.Opcodes.ICONST_2;
+import static org.objectweb.asm.Opcodes.ICONST_3;
+import static org.objectweb.asm.Opcodes.ICONST_4;
+import static org.objectweb.asm.Opcodes.ICONST_5;
+import static org.objectweb.asm.Opcodes.ICONST_M1;
+import static org.objectweb.asm.Opcodes.ILOAD;
+import static org.objectweb.asm.Opcodes.IRETURN;
+import static org.objectweb.asm.Opcodes.LDC;
+import static org.objectweb.asm.Opcodes.LLOAD;
+import static org.objectweb.asm.Opcodes.LOOKUPSWITCH;
+import static org.objectweb.asm.Opcodes.LRETURN;
+import static org.objectweb.asm.Opcodes.RETURN;
+import static org.objectweb.asm.Opcodes.SIPUSH;
+import static org.objectweb.asm.Opcodes.TABLESWITCH;
 
 public class Utils {
     public static boolean isInstruction(AbstractInsnNode node) {
@@ -52,33 +101,32 @@ public class Utils {
         if (next.getOpcode() == GOTO) {
             JumpInsnNode cast = (JumpInsnNode) next;
             next = cast.label;
-            while (!Utils.isInstruction(next)) {
+            while (!Utils.isInstruction(next))
                 next = next.getNext();
-            }
         }
         return next;
     }
 
     public static AbstractInsnNode getNext(AbstractInsnNode node) {
         AbstractInsnNode next = node.getNext();
-        while (!Utils.isInstruction(next)) {
+        while (!Utils.isInstruction(next))
             next = next.getNext();
-        }
+
         return next;
     }
 
     public static AbstractInsnNode getPrevious(AbstractInsnNode node, int amount) {
-        for (int i = 0; i < amount; i++) {
+        for (int i = 0; i < amount; i++)
             node = getPrevious(node);
-        }
+
         return node;
     }
 
     public static AbstractInsnNode getPrevious(AbstractInsnNode node) {
         AbstractInsnNode prev = node.getPrevious();
-        while (!Utils.isInstruction(prev)) {
+        while (!Utils.isInstruction(prev))
             prev = prev.getPrevious();
-        }
+
         return prev;
     }
 
@@ -118,23 +166,22 @@ public class Utils {
         while (targetMethod == null && !haystack.isEmpty()) {
             ClassNode needle = haystack.poll();
             targetMethod = needle.methods.stream().filter(imn -> imn.name.equals(methodName) && imn.desc.equals(methodDesc)).findFirst().orElse(null);
-            if (targetMethod == null) {
+            if (targetMethod == null)
                 if (!needle.name.equals("java/lang/Object")) {
                     for (String intf : needle.interfaces) {
                         ClassNode intfNode = dictionary.get(intf);
-                        if (intfNode == null) {
+                        if (intfNode == null)
                             throw new IllegalArgumentException("Class not found: " + intf);
-                        }
+
                         haystack.add(intfNode);
                     }
                     String superName = needle.superName;
                     needle = dictionary.get(needle.superName);
-                    if (needle == null) {
+                    if (needle == null)
                         throw new IllegalArgumentException("Class not found: " + superName);
-                    }
+
                     haystack.add(needle);
                 }
-            }
         }
 
         return targetMethod;
@@ -145,9 +192,9 @@ public class Utils {
         long total = 0;
         while (true) {
             int r = from.read(buf);
-            if (r == -1) {
+            if (r == -1)
                 break;
-            }
+
             to.write(buf, 0, r);
             total += r;
         }
@@ -156,9 +203,9 @@ public class Utils {
 
     public static String descFromTypes(Type[] types) {
         StringBuilder descBuilder = new StringBuilder("(");
-        for (Type type : types) {
+        for (Type type : types)
             descBuilder.append(type.getDescriptor());
-        }
+
         descBuilder.append(")");
         return descBuilder.toString();
     }
@@ -297,9 +344,8 @@ public class Utils {
     public static InsnList copyInsnList(InsnList original) {
         InsnList newInsnList = new InsnList();
 
-        for (AbstractInsnNode insn = original.getFirst(); insn != null; insn = insn.getNext()) {
+        for (AbstractInsnNode insn = original.getFirst(); insn != null; insn = insn.getNext())
             newInsnList.add(insn);
-        }
 
         return newInsnList;
     }
@@ -308,15 +354,12 @@ public class Utils {
         InsnList newInsnList = new InsnList();
         Map<LabelNode, LabelNode> labels = new HashMap<>();
 
-        for (AbstractInsnNode insn = original.getFirst(); insn != null; insn = insn.getNext()) {
-            if (insn instanceof LabelNode) {
-                labels.put((LabelNode)insn, new LabelNode());
-            }
-        }
+        for (AbstractInsnNode insn = original.getFirst(); insn != null; insn = insn.getNext())
+            if (insn instanceof LabelNode)
+                labels.put((LabelNode) insn, new LabelNode());
 
-        for (AbstractInsnNode insn = original.getFirst(); insn != null; insn = insn.getNext()) {
+        for (AbstractInsnNode insn = original.getFirst(); insn != null; insn = insn.getNext())
             newInsnList.add(insn.clone(labels));
-        }
 
         return newInsnList;
     }
@@ -339,77 +382,69 @@ public class Utils {
                 return new IntInsnNode(Opcodes.SIPUSH, num);
         }
     }
-    
-    public static void printClass(ClassNode classNode) { 
-        System.out.println(classNode.name + '\n'); 
-        classNode.methods.forEach(methodNode -> { 
-            System.out.println(methodNode.name + " " + methodNode.desc); 
-            for (int i = 0; i < methodNode.instructions.size(); i++) { 
-                System.out.printf("%s:   %s \n", i, prettyprint(methodNode.instructions.get(i))); 
-            } 
-        }); 
-    } 
 
-    public static boolean isInteger(AbstractInsnNode ain)
-	{
-	    if (ain == null) return false;
-		if(ain.getOpcode() >= Opcodes.ICONST_M1
-			&& ain.getOpcode() <= Opcodes.SIPUSH)
-			return true;
-		if(ain instanceof LdcInsnNode)
-		{
-			LdcInsnNode ldc = (LdcInsnNode)ain;
-			if(ldc.cst instanceof Integer)
-				return true;
-		}
-		return false;
-	}
+    public static void printClass(ClassNode classNode) {
+        System.out.println(classNode.name + '\n');
+        classNode.methods.forEach(methodNode -> {
+            System.out.println(methodNode.name + " " + methodNode.desc);
+            for (int i = 0; i < methodNode.instructions.size(); i++)
+                System.out.printf("%s:   %s \n", i, prettyprint(methodNode.instructions.get(i)));
+        });
+    }
 
-	public static int getIntValue(AbstractInsnNode node)
-	{
-		if(node.getOpcode() >= Opcodes.ICONST_M1
-			&& node.getOpcode() <= Opcodes.ICONST_5)
-			return node.getOpcode() - 3;
-		if (node.getOpcode() == Opcodes.BIPUSH) {
-		    return ((IntInsnNode) node).operand;
+    public static boolean isInteger(AbstractInsnNode ain) {
+        if (ain == null) return false;
+        if (ain.getOpcode() >= Opcodes.ICONST_M1
+                && ain.getOpcode() <= Opcodes.SIPUSH)
+            return true;
+        if (ain instanceof LdcInsnNode) {
+            LdcInsnNode ldc = (LdcInsnNode) ain;
+            if (ldc.cst instanceof Integer)
+                return true;
         }
-		if(node.getOpcode() == Opcodes.SIPUSH)
-			return ((IntInsnNode)node).operand;
-		if(node instanceof LdcInsnNode)
-		{
-			LdcInsnNode ldc = (LdcInsnNode)node;
-			if(ldc.cst instanceof Integer)
-				return (int)ldc.cst;
-		}
-		return 0;
-	}
+        return false;
+    }
+
+    public static int getIntValue(AbstractInsnNode node) {
+        if (node.getOpcode() >= Opcodes.ICONST_M1
+                && node.getOpcode() <= Opcodes.ICONST_5)
+            return node.getOpcode() - 3;
+        if (node.getOpcode() == Opcodes.BIPUSH)
+            return ((IntInsnNode) node).operand;
+        if (node.getOpcode() == Opcodes.SIPUSH)
+            return ((IntInsnNode) node).operand;
+        if (node instanceof LdcInsnNode) {
+            LdcInsnNode ldc = (LdcInsnNode) node;
+            if (ldc.cst instanceof Integer)
+                return (int) ldc.cst;
+        }
+        return 0;
+    }
 
     public static List<byte[]> loadBytes(File input) {
         List<byte[]> result = new ArrayList<>();
 
-        if (input.getName().endsWith(".jar")) {
+        if (input.getName().endsWith(".jar"))
             try (ZipFile zipIn = new ZipFile(input)) {
                 Enumeration<? extends ZipEntry> e = zipIn.entries();
                 while (e.hasMoreElements()) {
                     ZipEntry next = e.nextElement();
-                    if (next.getName().endsWith(".class")) {
+                    if (next.getName().endsWith(".class"))
                         try (InputStream in = zipIn.getInputStream(next)) {
                             result.add(IOUtils.toByteArray(in));
                         } catch (IllegalArgumentException x) {
                             System.out.println("Could not parse " + next.getName() + " (is it a class?)");
                         }
-                    }
                 }
             } catch (IOException e) {
                 e.printStackTrace(System.out);
             }
-        } else if (input.getName().endsWith(".class")) {
+        else if (input.getName().endsWith(".class"))
             try (InputStream in = new FileInputStream(input)) {
                 result.add(IOUtils.toByteArray(in));
             } catch (Throwable x) {
                 System.out.println("Could not parse " + input.getName() + " (is it a class?)");
             }
-        }
 
         return result;
     }
@@ -417,9 +452,8 @@ public class Utils {
     public static Map<LabelNode, LabelNode> generateCloneMap(InsnList list) {
         Map<LabelNode, LabelNode> result = new HashMap<>();
         list.iterator().forEachRemaining(insn -> {
-            if (insn instanceof LabelNode) {
+            if (insn instanceof LabelNode)
                 result.put((LabelNode) insn, new LabelNode());
-            }
         });
         return result;
     }

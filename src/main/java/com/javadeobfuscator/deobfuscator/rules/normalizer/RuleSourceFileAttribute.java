@@ -16,14 +16,14 @@
 
 package com.javadeobfuscator.deobfuscator.rules.normalizer;
 
-import com.javadeobfuscator.deobfuscator.*;
-import com.javadeobfuscator.deobfuscator.rules.*;
-import com.javadeobfuscator.deobfuscator.transformers.*;
-import com.javadeobfuscator.deobfuscator.transformers.normalizer.*;
-import com.javadeobfuscator.deobfuscator.utils.*;
-import org.objectweb.asm.tree.*;
-
-import java.util.*;
+import com.javadeobfuscator.deobfuscator.Deobfuscator;
+import com.javadeobfuscator.deobfuscator.rules.Rule;
+import com.javadeobfuscator.deobfuscator.transformers.Transformer;
+import com.javadeobfuscator.deobfuscator.transformers.normalizer.SourceFileClassNormalizer;
+import com.javadeobfuscator.deobfuscator.utils.TransformerHelper;
+import java.util.Collection;
+import java.util.Collections;
+import org.objectweb.asm.tree.ClassNode;
 
 public class RuleSourceFileAttribute implements Rule {
     @Override
@@ -34,30 +34,20 @@ public class RuleSourceFileAttribute implements Rule {
     @Override
     public String test(Deobfuscator deobfuscator) {
         for (ClassNode classNode : deobfuscator.getClasses().values()) {
-            if (classNode.sourceFile == null) {
+            if (classNode.sourceFile == null)
                 continue;
-            }
-
-            if (classNode.sourceFile.equals("SourceFile")) {
+            if (classNode.sourceFile.equals("SourceFile")) // Proguard
                 continue;
-            }
 
             String sourceFile = classNode.sourceFile;
-            if (sourceFile.endsWith(".java")) {
+            if (sourceFile.endsWith(".java"))
                 sourceFile = sourceFile.substring(0, sourceFile.length() - 5);
-            }
-
-            if (sourceFile.equals(TransformerHelper.getFullClassName(classNode.name))) {
+            if (sourceFile.equals(TransformerHelper.getFullClassName(classNode.name)))
                 continue;
-            }
-
-            if (sourceFile.equals(TransformerHelper.getOuterClassName(classNode.name))) {
+            if (sourceFile.equals(TransformerHelper.getOuterClassName(classNode.name)))
                 continue;
-            }
-
-            if (sourceFile.equals(TransformerHelper.getInnerClassName(classNode.name))) {
+            if (sourceFile.equals(TransformerHelper.getInnerClassName(classNode.name)))
                 continue;
-            }
 
             return "Found possible SourceFile attribute on " + classNode.name + ": " + classNode.sourceFile;
         }

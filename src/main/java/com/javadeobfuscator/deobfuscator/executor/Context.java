@@ -3,12 +3,16 @@ package com.javadeobfuscator.deobfuscator.executor;
 import com.javadeobfuscator.deobfuscator.asm.ConstantPool;
 import com.javadeobfuscator.deobfuscator.executor.providers.Provider;
 import com.javadeobfuscator.deobfuscator.executor.values.JavaValue;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Consumer;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
-
-import java.io.File;
-import java.util.*;
-import java.util.function.Consumer;
 
 public class Context { //FIXME clinit classes
     private List<StackTraceElement> context = new ArrayList<>();
@@ -37,7 +41,7 @@ public class Context { //FIXME clinit classes
         clazz = clazz.replace('/', '.');
         context.add(0, new StackTraceElement(clazz, method, "", constantPoolSize));
     }
-    
+
     public void push(String clazz, String method, String sourceFile, int constantPoolSize) {
         clazz = clazz.replace('/', '.');
         context.add(0, new StackTraceElement(clazz, method, sourceFile, constantPoolSize));
@@ -60,11 +64,11 @@ public class Context { //FIXME clinit classes
     private Map<AbstractInsnNode, Consumer<BreakpointInfo>> breakpointsAfter = new HashMap<>();
 
     public void doBreakpoint(AbstractInsnNode now, boolean before, List<JavaValue> stack, List<JavaValue> locals, Object tothrow) {
-        if (before && breakpointsBefore.containsKey(now)) {
+        if (before && breakpointsBefore.containsKey(now))
             breakpointsBefore.get(now).accept(new BreakpointInfo(tothrow, stack, locals));
-        } else if (!before && breakpointsAfter.containsKey(now)) {
+        else if (!before && breakpointsAfter.containsKey(now))
             breakpointsAfter.get(now).accept(new BreakpointInfo(tothrow, stack, locals));
-        }
+
     }
 
     public void breakpoint(AbstractInsnNode now, Consumer<BreakpointInfo> before, Consumer<BreakpointInfo> after) {

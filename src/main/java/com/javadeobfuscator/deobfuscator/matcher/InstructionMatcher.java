@@ -17,12 +17,11 @@
 package com.javadeobfuscator.deobfuscator.matcher;
 
 import com.javadeobfuscator.deobfuscator.utils.Utils;
-import org.objectweb.asm.tree.AbstractInsnNode;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.objectweb.asm.tree.AbstractInsnNode;
 
 public class InstructionMatcher {
     public InstructionPattern getPattern() {
@@ -43,9 +42,9 @@ public class InstructionMatcher {
         end = mainStep.tryMatch(this, start);
         if (end != null) {
             end = Utils.getPrevious(end); // We want this inclusive
-            if (end == null) {
+            if (end == null)
                 throw new RuntimeException("what?");
-            }
+
             return true;
         }
         return false;
@@ -71,17 +70,17 @@ public class InstructionMatcher {
 
     public List<AbstractInsnNode> getCapturedInstructions(String id) {
         List<List<AbstractInsnNode>> captured = capturedInsns.get(id);
-        if (captured == null || captured.size() > 1) {
+        if (captured == null || captured.size() > 1)
             return null;
-        }
+
         return captured.get(0);
     }
 
     public AbstractInsnNode getCapturedInstruction(String id) {
         List<AbstractInsnNode> captured = getCapturedInstructions(id);
-        if (captured == null || captured.size() > 1) {
+        if (captured == null || captured.size() > 1)
             return null;
-        }
+
         return captured.get(0);
     }
 }
