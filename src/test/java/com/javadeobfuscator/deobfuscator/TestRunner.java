@@ -9,6 +9,8 @@ import com.javadeobfuscator.deobfuscator.executor.defined.ReflectiveProvider;
 import com.javadeobfuscator.deobfuscator.executor.providers.ComparisonProvider;
 import com.javadeobfuscator.deobfuscator.executor.providers.DelegatingProvider;
 import com.javadeobfuscator.deobfuscator.executor.values.JavaValue;
+import com.javadeobfuscator.deobfuscator.transformers.Transformer;
+import com.javadeobfuscator.deobfuscator.transformers.allatori.StringEncryptionTransformer;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -23,12 +25,14 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+import jdk.internal.org.objectweb.asm.Opcodes;
 import org.apache.commons.io.IOUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 
 import static org.junit.Assert.assertTrue;
@@ -64,6 +68,69 @@ public class TestRunner {
     }
 
     @Test
+    public void test() throws Exception {
+        ClassNode classNode = new ClassNode();
+        ClassReader reader = new ClassReader(new FileInputStream(new File("./src/test/resources/Example.class")));
+        reader.accept(classNode, 0);
+
+        DelegatingProvider provider = new DelegatingProvider();
+        provider.register(new JVMComparisonProvider());
+        provider.register(new ComparisonProvider() {
+            @Override
+            public boolean instanceOf(JavaValue target, Type type, Context context) {
+                return false;
+            }
+
+            @Override
+            public boolean checkcast(JavaValue target, Type type, Context context) {
+                if (type.getDescriptor().equals("[B")) {
+                    return target.value() instanceof byte[];
+                } else if (type.getDescriptor().equals("[I"))
+                    return target.value() instanceof int[];
+
+                return true;
+            }
+
+            @Override
+            public boolean checkEquality(JavaValue first, JavaValue second, Context context) {
+                return false;
+            }
+
+            @Override
+            public boolean canCheckInstanceOf(JavaValue target, Type type, Context context) {
+                return false;
+            }
+
+            @Override
+            public boolean canCheckcast(JavaValue target, Type type, Context context) {
+                return true;
+            }
+
+            @Override
+            public boolean canCheckEquality(JavaValue first, JavaValue second, Context context) {
+                return false;
+            }
+        });
+
+        provider.register(new MappedMethodProvider(jre));
+        provider.register(new MappedFieldProvider());
+        Context context = new Context(provider);
+        context.dictionary = new HashMap<>();
+        context.dictionary.putAll(jre);
+        context.dictionary.put(classNode.name, classNode);
+
+        classNode.methods.forEach(methodNode -> Arrays.stream(methodNode.instructions.toArray()).forEach(insn -> {
+            if (insn instanceof MethodInsnNode) {
+                MethodInsnNode min = (MethodInsnNode) insn;
+                if (min.getOpcode() == Opcodes.INVOKEVIRTUAL && min.name.equals("clone"))
+                    min.owner = "java/lang/Object";
+            }
+        }));
+
+        MethodExecutor.execute(classNode, classNode.methods.stream().filter(methodNode -> methodNode.name.equals("decrypt")).findFirst().get(), Arrays.asList(JavaValue.valueOf("Test")), null, context);
+    }
+
+    /*@Test
     public void test() throws IOException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException, ClassNotFoundException {
         File testcases = new File("./src/test/resources/testcases");
         if (!testcases.exists())
@@ -248,5 +315,5 @@ public class TestRunner {
         }
 
         return result.toString();
-    }
+    }*/
 }

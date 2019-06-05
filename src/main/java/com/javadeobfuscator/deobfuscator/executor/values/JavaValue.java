@@ -22,6 +22,7 @@ import com.javadeobfuscator.deobfuscator.executor.defined.types.JavaClass;
 import com.javadeobfuscator.deobfuscator.executor.defined.types.JavaConstantPool;
 import com.javadeobfuscator.deobfuscator.executor.defined.types.JavaConstructor;
 import com.javadeobfuscator.deobfuscator.executor.defined.types.JavaField;
+import com.javadeobfuscator.deobfuscator.executor.defined.types.JavaFieldHandle;
 import com.javadeobfuscator.deobfuscator.executor.defined.types.JavaMethod;
 import com.javadeobfuscator.deobfuscator.executor.defined.types.JavaMethodHandle;
 import com.javadeobfuscator.deobfuscator.executor.defined.types.JavaThread;
@@ -83,7 +84,7 @@ public abstract class JavaValue {
             return new JavaObject(cst, "java/lang/Object");
         else if (cst instanceof JavaThread)
             return new JavaObject(cst, "java/lang/Thread");
-        else if (cst instanceof JavaMethodHandle)
+        else if (cst instanceof JavaMethodHandle || cst instanceof JavaFieldHandle)
             return new JavaObject(cst, "java/lang/invoke/MethodHandle");
         else if (cst instanceof JavaMethod)
             return new JavaObject(cst, "java/lang/reflect/Method");
