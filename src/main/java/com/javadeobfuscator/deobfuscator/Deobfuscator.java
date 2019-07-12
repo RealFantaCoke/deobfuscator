@@ -192,7 +192,8 @@ public class Deobfuscator {
     public void loadInput(String name, byte[] data) {
         boolean passthrough = true;
 
-        if (name.endsWith(".class"))
+        if (name.endsWith(".class")
+                || name.endsWith(".class/")) // some obfuscators like to append '/' to the entry name
             try {
                 ClassReader reader = new ClassReader(data);
                 ClassNode node = new ClassNode();
@@ -202,18 +203,20 @@ public class Deobfuscator {
                 setConstantPool(node, new ConstantPool(reader));
 
                 if (!isClassIgnored(node)) {
-                    for (int i = 0; i < node.methods.size(); i++) {
-                        MethodNode methodNode = node.methods.get(i);
-                        JSRInlinerAdapter adapter = new JSRInlinerAdapter(methodNode, methodNode.access, methodNode.name, methodNode.desc, methodNode.signature, methodNode.exceptions.toArray(new String[0]));
-                        methodNode.accept(adapter);
-                        node.methods.set(i, adapter);
+                    if (node.version == Opcodes.V1_1 || node.version <= Opcodes.V1_6) {
+                        for (int i = 0; i < node.methods.size(); i++) {
+                            MethodNode methodNode = node.methods.get(i);
+                            JSRInlinerAdapter adapter = new JSRInlinerAdapter(methodNode, methodNode.access, methodNode.name, methodNode.desc, methodNode.signature, methodNode.exceptions.toArray(new String[0]));
+                            methodNode.accept(adapter);
+                            node.methods.set(i, adapter);
+                        }
                     }
 
                     classes.put(node.name, node);
                     passthrough = false;
                 } else
                     classpath.put(node.name, node);
-            } catch (IllegalArgumentException x) {
+            } catch (Throwable x) {
                 logger.error("Could not parse {} (is it a class file?)", name, x);
             }
 

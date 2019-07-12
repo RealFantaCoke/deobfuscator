@@ -44,7 +44,8 @@ Otherwise, check out [this guide](CUSTOMTRANSFORMER.md) on how to implement your
 [DashO](https://www.preemptive.com/products/dasho/overview)  
 [DexGuard](https://www.guardsquare.com/dexguard)    
 [ClassGuard](https://www.zenofx.com/classguard/)  
-[Smoke](https://newtownia.net/smoke)  
+[Smoke](https://newtownia.net/smoke)    
+[SpigotProtect](https://spigot.pro/tect/)    
 SkidSuite2 (dead, some forks are listed [here](https://github.com/tetratec/SkidSuite2/network/members))
 
 ## List of Transformers
